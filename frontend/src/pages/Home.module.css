@@ -118,7 +118,6 @@
         visibility 0.3s ease;
 }
 
-/* --- Mostra o botão no hover do card --- */
 .card:hover button {
     opacity: 1;
     visibility: visible;

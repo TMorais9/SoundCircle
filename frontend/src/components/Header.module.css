@@ -15,7 +15,6 @@
     transition: background 0.3s ease, box-shadow 0.3s ease, height 0.3s ease;
 }
 
-/* efeito ao fazer scroll — fica mais compacto */
 .glassHeader.scrolled {
     height: 75px;
     background: linear-gradient(90deg, #ff5823, #ff7a3e);

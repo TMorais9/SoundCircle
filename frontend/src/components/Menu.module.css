@@ -22,7 +22,6 @@
     box-shadow: 0 10px 24px rgba(255, 88, 35, 0.35);
 }
 
-/* --- Botões do menu --- */
 .button {
     outline: none;
     border: none;
@@ -43,14 +42,12 @@
     transition: transform 0.25s ease, color 0.25s ease;
 }
 
-/* --- Hover: brilho leve --- */
 .button:hover span {
     transform: scale(1.15);
     color: #fff;
     filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.4));
 }
 
-/* --- Botão ativo --- */
 .button.active {
     background: linear-gradient(90deg, #ff5823, #ff8850);
     box-shadow: 0 4px 14px rgba(255, 88, 35, 0.45);
