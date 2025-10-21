@@ -1,44 +1,48 @@
 .cardSection {
     width: 100%;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 18px;
-    justify-items: center;
-    margin-top: 14px;
-    padding: 12px 15px;
+    grid-template-columns: repeat(4, 290px);
+    gap: 20px;
+    justify-content: center;
+    padding: 25px;
+    margin-top: 100px;
 }
+
 
 .card {
     width: 100%;
-    max-width: 350px;
-    min-height: 420px;
-    background: #FEF6DE;
-    border-radius: 15px;
-    box-shadow: 1px 5px 60px 0px rgba(69, 69, 69, 0.365);
-    border: 1px solid #FF5823;
+    max-width: 370px;
+    min-height: 300px;
+    background: #fffaf3;
+    border-radius: 20px;
+    border: 1px solid #ff582340;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    align-items: center;
     position: relative;
     overflow: hidden;
-    padding-bottom: 70px;
-    /* espaço reservado para o botão */
+    padding-bottom: 55px;
+    transition: all 0.25s ease;
 }
 
-/* linha laranja no topo */
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 26px rgba(255, 88, 35, 0.15);
+}
+
 .card .cardBorderTop {
-    width: 60%;
-    height: 3%;
-    background: #FF5823;
-    margin: 0px auto;
-    border-radius: 0px 0px 15px 15px;
+    width: 70%;
+    height: 5px;
+    background: linear-gradient(90deg, #FF5823, #FF8850);
+    margin: 0 auto;
+    border-radius: 0 0 15px 15px;
 }
 
-/* imagem de perfil centrada no topo */
 .card .person {
     display: flex;
     justify-content: center;
-    margin-top: 10px;
+    margin-top: 20px;
 }
 
 .card .person img {
@@ -46,67 +50,83 @@
     height: 120px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid #FF5823;
-
+    border: 4px solid #FF5823;
+    box-shadow: 0 4px 10px rgba(255, 88, 35, 0.25);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* informações alinhadas à esquerda logo abaixo da imagem */
+.card:hover .person img {
+    transform: scale(1.05);
+    box-shadow: 0 6px 14px rgba(255, 88, 35, 0.3);
+}
+
 .cardInfo {
-    display: flex;
-    flex-direction: column;
-    text-align: left;
-    margin-top: 20px;
-    padding: 0 20px;
-    font-family: 'Courier New', Courier, monospace;
+    text-align: center;
+    margin-top: 40px;
+    font-family: "Poppins", sans-serif;
+}
+
+
+.card:hover .cardInfo {
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
 }
 
 .cardInfo .name {
     font-weight: 700;
-    color: black;
-    font-size: 30px;
+    color: #222;
+    font-size: 25px;
+    letter-spacing: 0.3px;
 }
 
 .cardInfo .infoDetails {
     display: flex;
+    justify-content: center;
     gap: 10px;
 }
 
-.cardInfo .job {
-    font-weight: 500;
-    color: #555;
-    font-size: 16px;
-}
-
+.cardInfo .job,
 .cardInfo .age {
     font-weight: 500;
-    color: #555;
-    font-size: 16px;
+    color: #666;
+    font-size: 15px;
 }
 
-.cardInfo .description {
-    margin-top: 8px;
-    font-size: 13px;
-    color: #333;
-    line-height: 1.4;
-}
 
-/* botão fixo no fundo do card */
 .card button {
     width: 80%;
-    padding: 10px;
-    border-radius: 8px;
+    padding: 12px;
+    border-radius: 10px;
     border: none;
-    background: #FF5823;
+    background: linear-gradient(90deg, #FF5823, #FF8850);
     color: white;
     font-weight: 600;
+    letter-spacing: 0.5px;
     cursor: pointer;
     position: absolute;
-    bottom: 15px;
+    bottom: 18px;
     left: 50%;
-    transform: translateX(-50%);
-    transition: background-color 0.3s ease-in-out;
+    transform: translateX(-50%) translateY(20px);
+    box-shadow: 0 4px 14px rgba(255, 88, 35, 0.25);
+    opacity: 0;
+    visibility: hidden;
+    transition: 
+        background 0.3s ease,
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        opacity 0.3s ease,
+        visibility 0.3s ease;
+}
+
+/* --- Mostra o botão no hover do card --- */
+.card:hover button {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
 }
 
 .card button:hover {
-    background-color: #ff6b3e;
+    background: linear-gradient(90deg, #ff6b3e, #ff9a66);
+    transform: translateX(-50%) scale(1.03);
+    box-shadow: 0 6px 18px rgba(255, 88, 35, 0.35);
 }

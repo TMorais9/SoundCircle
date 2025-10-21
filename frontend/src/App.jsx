@@ -4,6 +4,7 @@ import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 
 // Components
 import Home from "./pages/home";
+import Info from "./pages/info";
 
 // const Private = ({ Component }: { Component: React.FC }) => {
 //     // This component is used to check if the user is logged in, if not, it will redirect the user to the login page
@@ -13,6 +14,7 @@ import Home from "./pages/home";
 
 const routes = [
     { path: "/", element: <Home /> },
+    { path: "/info", element: <Info /> },
     // { path: "/inicio", element: <Private Component={Home} /> },
     // { path: "/utilizadores", element: <Private Component={Users} /> },
     // { path: "/materiais", element: <Private Component={Material} /> },

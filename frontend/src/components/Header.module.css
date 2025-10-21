@@ -1,12 +1,29 @@
 .glassHeader {
-    background-color: #ff5823;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    max-height: 100px;
     height: 90px;
+    background: rgba(255, 88, 35, 0.9);
+    background: linear-gradient(90deg, #FF5823, #FF8850);
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(255, 88, 35, 0.25);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    transition: background 0.3s ease, box-shadow 0.3s ease, height 0.3s ease;
+}
+
+/* efeito ao fazer scroll — fica mais compacto */
+.glassHeader.scrolled {
+    height: 75px;
+    background: linear-gradient(90deg, #ff5823, #ff7a3e);
+    box-shadow: 0 6px 18px rgba(255, 88, 35, 0.35);
+}
+
+#root {
+    margin-top: 90px; /* empurra o conteúdo abaixo do header */
 }
 
 .logoImg {
