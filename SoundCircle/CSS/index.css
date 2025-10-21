@@ -137,68 +137,103 @@ img {
 .card {
     width: 100%;
     max-width: 350px;
-    height: 100%;
-    min-height: 400px;
+    min-height: 420px;
     background: #FEF6DE;
     border-radius: 15px;
     box-shadow: 1px 5px 60px 0px rgba(69, 69, 69, 0.365);
     border: 1px solid #FF5823;
-    padding-bottom: 18px;
-    justify-content: space-evenly;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+    overflow: hidden;
+    padding-bottom: 70px;
+    /* espaço reservado para o botão */
 }
 
+/* linha laranja no topo */
 .card .card-border-top {
     width: 60%;
     height: 3%;
     background: #FF5823;
-    margin: auto;
+    margin: 0px auto;
     border-radius: 0px 0px 15px 15px;
 }
 
-.card .card-info {
-    font-weight: 600;
+/* imagem de perfil centrada no topo */
+.card .person {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.card .person img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #FF5823;
+
+}
+
+/* informações alinhadas à esquerda logo abaixo da imagem */
+.card-info {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    margin-top: 20px;
+    padding: 0 20px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.card-info .name {
+    font-weight: 700;
     color: black;
-    text-align: center;
-    display: block;
-    padding-top: 10px;
+    font-size: 30px;
+}
+
+.card-info .info-details {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.card-info .job {
+    font-weight: 500;
+    color: #555;
     font-size: 16px;
 }
 
-.card .job {
-    font-weight: 400;
-    color: black;
-    display: block;
-    text-align: center;
-    padding-top: 3px;
-    font-size: 12px;
+.card-info .age {
+    font-weight: 500;
+    color: #555;
+    font-size: 16px;
 }
 
-.card-info {
-    width: 100%;
-    align-items: start;
-    justify-content: flex-start;
+.card-info .description {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.4;
 }
 
-.card .person span {
-    font-size: 120px;
-    border-radius: 15px;
-    color: #FF5823;
-    margin: auto;
-    margin-top: 25px;
-}
-
+/* botão fixo no fundo do card */
 .card button {
-    padding: 8px 25px;
-    display: block;
-    margin: auto;
+    width: 80%;
+    padding: 10px;
     border-radius: 8px;
     border: none;
-    margin-top: 30px;
     background: #FF5823;
     color: white;
     font-weight: 600;
+    cursor: pointer;
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: background-color 0.3s ease-in-out;
 }
 
 .card button:hover {
-    background: #f9f9;
+    background-color: #ff6b3e;
 }
