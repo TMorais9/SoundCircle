@@ -4,11 +4,84 @@
     align-items: center;
     justify-content: flex-start;
     width: 100%;
-    height: 100%;
+    min-height: 100vh;
     padding: 15px 20px;
     color: #222;
     font-family: "Poppins", sans-serif;
     margin-top: 120px;
+    box-sizing: border-box;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    animation: fadeIn 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- Fade-out ao voltar --- */
+.fadeOut {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.backButton {
+    margin-left: 70px;
+    position: absolute;
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #ff5823;
+    font-size: 26px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.25s ease;
+    z-index: 1;
+}
+
+.backButton:hover {
+    background: #ff5823;
+    color: #fff;
+    transform: scale(1.05);
+}
+
+@media (max-width: 1024px) and (min-width: 601px) {
+    .backButton {
+        margin: 0px 0 0px 0px;
+        width: 46px;
+        height: 46px;
+        font-size: 26px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
+    }
+}
+
+@media (max-width: 600px) {
+    .backButton {
+        margin: 10px 0 5px 12px;
+        width: 40px;
+        height: 40px;
+        font-size: 22px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .backButton:hover {
+        transform: none;
+    }
 }
 
 .profileContainer {
@@ -19,8 +92,8 @@
     gap: 40px;
     padding: 30px 40px;
     width: 100%;
-    min-height: 400px;
     max-width: 1200px;
+    min-height: 400px;
     transition: all 0.3s ease;
     background: rgba(255, 255, 255, 0.85);
     border-radius: 25px;
@@ -44,13 +117,85 @@
     box-shadow: 0 12px 32px rgba(255, 88, 35, 0.35);
 }
 
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    backdrop-filter: blur(4px);
+}
+
+.modalContent {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modalImage {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    animation: zoomIn 0.3s ease;
+}
+
+.closeButton {
+    position: absolute;
+    top: -12px;
+    left: -12px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    color: #ff5823;
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    z-index: 1001;
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.closeButton:hover {
+    background: #ff5823;
+    color: #fff;
+    transform: scale(1.05);
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 600px) {
+    .closeButton {
+        top: -8px;
+        left: -8px;
+        width: 36px;
+        height: 36px;
+        font-size: 20px;
+    }
+}
+
 .leftSection {
     display: flex;
     flex-direction: column;
-    align-items: left;
-    height: 100%;
+    align-items: flex-start;
     gap: 6px;
-
 }
 
 .name {
@@ -83,8 +228,8 @@
     padding: 25px 30px;
     line-height: 1.7;
     text-align: justify;
-    transition: all 0.3s ease;
     width: 100%;
+    transition: all 0.3s ease;
 }
 
 .description h2 {
@@ -98,7 +243,7 @@
     margin-top: 40px;
     width: 100%;
     display: flex;
-    justify-content: end;
+    justify-content: flex-end;
 }
 
 .messageButton {
@@ -154,7 +299,6 @@
     font-size: 16px;
     font-weight: 600;
     color: #333;
-    transition: all 0.3s ease;
     text-align: center;
 }
 
@@ -165,8 +309,112 @@
     transform: translateY(-4px);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
+    .profileContainer {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 25px;
+        margin-top: 30px;
+    }
+
+    .leftSection {
+        align-items: center;
+    }
+
+    .name {
+        font-size: 28px;
+    }
+
+    .basicInfo {
+        font-size: 16px;
+    }
+
+    .description {
+        padding: 20px;
+        text-align: justify;
+    }
+
+    .buttonArea {
+        justify-content: center;
+    }
+
+    .messageButton {
+        max-width: 120px;
+    }
+
     .traitsGrid {
-        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .infoPage {
+        margin-top: 80px;
+        padding: 10px;
+    }
+
+    .profileContainer {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 20px;
+        padding: 20px;
+        width: 95%;
+    }
+
+    .photo {
+        width: 150px;
+        height: 150px;
+        border-width: 4px;
+    }
+
+    .leftSection {
+        align-items: center;
+    }
+
+    .name {
+        font-size: 24px;
+    }
+
+    .basicInfo {
+        font-size: 14px;
+    }
+
+    .experience {
+        font-size: 13px;
+    }
+
+    .description {
+        padding: 18px;
+        font-size: 14px;
+        line-height: 1.6;
+        text-align: left;
+    }
+
+    .buttonArea {
+        justify-content: center;
+        margin-top: 25px;
+    }
+
+    .messageButton {
+        max-width: 140px;
+        font-size: 14px;
+        padding: 12px;
+    }
+
+    .traitsSection {
+        width: 95%;
+        margin-top: 25px;
+    }
+
+    .traitsGrid {
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .traitCard {
+        font-size: 14px;
+        padding: 16px 10px;
     }
 }

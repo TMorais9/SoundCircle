@@ -1,8 +1,13 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "./Info.module.css";
 import Header from "../components/Header";
 import Menu from "../components/Menu";
 
 function Info() {
+    const navigate = useNavigate();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
     const person = {
         nome: "Miguel Dias",
         idade: 21,
@@ -11,19 +16,39 @@ function Info() {
         descricao:
             "Músico apaixonado por sonoridades modernas e clássicas. Atua em concertos locais e colaborações criativas. O seu estilo combina influências do jazz, rock e música tradicional portuguesa, criando uma sonoridade envolvente e autêntica. Acredita que a música é uma ponte entre emoções e culturas, e está sempre à procura de novas oportunidades para partilhar essa paixão.",
         foto: "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png",
-        caracteristicas: ["Extrovertido", "Experiente", "Criativo", "Colaborativo", "Apaixonado", "Dedicado", "Versátil", "Inovador"],
+        caracteristicas: [
+            "Extrovertido",
+            "Experiente",
+            "Criativo",
+            "Colaborativo",
+            "Apaixonado",
+            "Dedicado",
+            "Versátil",
+            "Inovador",
+        ],
     };
 
     return (
         <>
             <Header />
-            <main className={styles.infoPage}>
+            <main
+                className={`${styles.infoPage} ${fadeOut ? styles.fadeOut : ""}`}
+            >
+                <button
+                    className={styles.backButton}
+                    onClick={handleBack}
+                    aria-label="Voltar à Home"
+                >
+                    <span className="material-symbols-outlined">arrow_back</span>
+                </button>
+
                 <div className={styles.profileContainer}>
                     <div className={styles.leftSection}>
                         <img
                             className={styles.photo}
                             src={person.foto}
                             alt={`Foto de ${person.nome}`}
+                            onClick={() => setIsModalOpen(true)}
                         />
                         <h1 className={styles.name}>{person.nome}</h1>
                         <p className={styles.basicInfo}>
@@ -38,7 +63,9 @@ function Info() {
                         <p>{person.descricao}</p>
                         <div className={styles.buttonArea}>
                             <button className={styles.messageButton}>
-                                <span className="material-symbols-outlined">message</span>
+                                <span className="material-symbols-outlined">
+                                    message
+                                </span>
                             </button>
                         </div>
                     </div>
@@ -55,6 +82,31 @@ function Info() {
                 </section>
             </main>
             <Menu />
+
+            {isModalOpen && (
+                <div
+                    className={styles.modalOverlay}
+                    onClick={() => setIsModalOpen(false)}
+                >
+                    <div
+                        className={styles.modalContent}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            className={styles.closeButton}
+                            onClick={() => setIsModalOpen(false)}
+                            aria-label="Fechar imagem"
+                        >
+                            ✕
+                        </button>
+                        <img
+                            src={person.foto}
+                            alt={`Foto de ${person.nome}`}
+                            className={styles.modalImage}
+                        />
+                    </div>
+                </div>
+            )}
         </>
     );
 }

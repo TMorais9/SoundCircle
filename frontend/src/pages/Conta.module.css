@@ -1,0 +1,529 @@
+.infoPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    min-height: 100vh;
+    padding: 15px 20px;
+    color: #222;
+    font-family: "Poppins", sans-serif;
+    margin-top: 120px;
+    box-sizing: border-box;
+    animation: fadeIn 0.4s ease forwards;
+    opacity: 0;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profileContainer {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 40px;
+    padding: 30px 40px;
+    width: 100%;
+    max-width: 1200px;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 25px;
+    border: 1px solid rgba(255, 88, 35, 0.15);
+    box-shadow: 0 8px 25px rgba(255, 88, 35, 0.1);
+    backdrop-filter: blur(8px);
+}
+
+.backButton {
+    margin-left: 70px;
+    position: absolute;
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #ff5823;
+    font-size: 26px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.25s ease;
+    z-index: 1;
+}
+
+.backButton:hover {
+    background: #ff5823;
+    color: #fff;
+    transform: scale(1.05);
+}
+
+.photo {
+    width: 200px;
+    height: 200px;
+    border-radius: 18px;
+    object-fit: cover;
+    border: 5px solid #FF5823;
+    box-shadow: 0 8px 24px rgba(255, 88, 35, 0.25);
+}
+
+.photoWrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.fileInput {
+    display: none;
+}
+
+.photoButtons {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    align-items: center;
+    padding: 0 12px;
+    box-sizing: border-box;
+}
+
+.editPhotoLabel {
+    background: linear-gradient(90deg, #ff5823, #ff8850);
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(255, 88, 35, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+    color: white;
+    z-index: 2;
+}
+
+.editPhotoLabel:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 18px rgba(255, 88, 35, 0.35);
+}
+
+.removePhotoButton {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #ff5823;
+    font-size: 22px;
+    box-shadow: 0 4px 10px rgba(255, 88, 35, 0.25);
+    transition: all 0.25s ease;
+}
+
+.removePhotoButton:hover {
+    background: #ff5823;
+    color: #fff;
+    transform: scale(1.05);
+}
+
+
+.name {
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.basicInfo {
+    font-size: 18px;
+    color: #555;
+}
+
+.experience {
+    font-size: 16px;
+    color: #666;
+}
+
+.description {
+    margin-top: 25px;
+    border-radius: 15px;
+    padding: 25px 30px;
+    line-height: 1.7;
+    text-align: justify;
+    width: 100%;
+    flex: 1;
+}
+
+.description h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #FF5823;
+    margin-bottom: 12px;
+}
+
+.inputArea {
+    width: 100%;
+    min-height: 200px;
+    /* 🔸 mais alta para edição confortável */
+    max-height: 400px;
+    /* evita que cresça demais */
+    border: 1px solid rgba(255, 88, 35, 0.3);
+    border-radius: 10px;
+    padding: 25px 30px;
+    font-size: 16px;
+    font-family: "Poppins", sans-serif;
+    color: #222;
+    background: rgba(255, 255, 255, 0.95);
+    line-height: 1.7;
+    text-align: justify;
+    box-sizing: border-box;
+    resize: none;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+    overflow-y: auto;
+    /* 🔸 scroll apenas no modo edição */
+}
+
+.inputArea::-webkit-scrollbar {
+    width: 8px;
+}
+
+.inputArea::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ff8850, #ff5823);
+    border-radius: 10px;
+}
+
+.inputArea::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #ff6b3e, #ff4b1e);
+}
+
+.inputArea:focus {
+    border-color: #FF5823;
+    outline: none;
+}
+
+.inputText {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255, 88, 35, 0.3);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 16px;
+    font-family: "Poppins", sans-serif;
+    color: #222;
+    background: rgba(255, 255, 255, 0.95);
+    transition: border 0.3s ease;
+}
+
+.inputText:focus,
+.inputArea:focus {
+    border-color: #FF5823;
+    outline: none;
+}
+
+.description p,
+.inputArea {
+    transition: all 0.25s ease;
+}
+
+.editButtonArea {
+    margin-top: 20px;
+    text-align: right;
+}
+
+.editButtonArea {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.editButton,
+.cancelButton {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.editButton {
+    background: linear-gradient(90deg, #FF5823, #FF8850);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(255, 88, 35, 0.25);
+}
+
+.editButton:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 18px rgba(255, 88, 35, 0.35);
+}
+
+.cancelButton {
+    background: #fff;
+    color: #ff5823;
+    border: 2px solid #ff5823;
+    box-shadow: 0 4px 10px rgba(255, 88, 35, 0.15);
+}
+
+.cancelButton:hover {
+    background: #ff5823;
+    color: #fff;
+}
+
+.editButton.active {
+    background: linear-gradient(90deg, #ff6b3e, #ff9a66);
+}
+
+.traitsSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin-top: 25px;
+}
+
+.traitsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 20px;
+    width: 100%;
+}
+
+.traitCard {
+    height: 60px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 88, 35, 0.15);
+    box-shadow: 0 8px 25px rgba(255, 88, 35, 0.1);
+    padding: 0 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+.removeButton {
+    background: transparent;
+    border: none;
+    color: #ff5823;
+    font-size: 18px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.removeButton:hover {
+    color: #ff3b00;
+}
+
+.addButton {
+    height: 60px;
+    width: 60px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #FF5823, #FF8850);
+    border: none;
+    cursor: pointer;
+    color: #fff;
+    font-size: 26px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(255, 88, 35, 0.25);
+    transition: all 0.3s ease;
+}
+
+.addButton:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 88, 35, 0.35);
+}
+
+.addButtonActive {
+    transform: rotate(180deg);
+    background: linear-gradient(90deg, #ff6b3e, #ff9a66);
+    box-shadow: 0 6px 20px rgba(255, 88, 35, 0.35);
+}
+
+.addButtonActive:hover {
+    transform: rotate(180deg) scale(1.05);
+}
+
+.traitOptions {
+    margin-top: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    animation: fadeIn 0.3s ease;
+}
+
+.optionButton {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 88, 35, 0.3);
+    border-radius: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #444;
+    transition: all 0.3s ease;
+}
+
+.optionButton:hover {
+    background: linear-gradient(90deg, #FF5823, #FF8850);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(255, 88, 35, 0.25);
+}
+
+/* --- Área do botão Sign Out --- */
+.signOutArea {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 50px;
+    margin-bottom: 100px;
+    /* espaço antes do menu fixo */
+}
+
+.signOutButton {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 30px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #ff5823, #ff8850);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 88, 35, 0.25);
+    transition: transform 0.25s ease, box-shadow 0.3s ease, background 0.3s ease;
+}
+
+.signOutButton:hover {
+    transform: scale(1.05);
+    background: linear-gradient(90deg, #ff6b3e, #ff9a66);
+    box-shadow: 0 6px 20px rgba(255, 88, 35, 0.35);
+}
+
+.signOutButton span {
+    font-size: 22px;
+}
+
+/* --- Modal de Login --- */
+.loginModalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    animation: fadeIn 0.3s ease forwards;
+}
+
+.loginModal {
+    background: #fffaf3;
+    padding: 40px 50px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(255, 88, 35, 0.25);
+    width: 90%;
+    max-width: 420px;
+    text-align: center;
+    border: 1px solid rgba(255, 88, 35, 0.15);
+    animation: slideUp 0.4s ease;
+}
+
+.loginModal h2 {
+    color: #ff5823;
+    font-weight: 700;
+    margin-bottom: 25px;
+}
+
+.loginInput {
+    width: 100%;
+    margin-bottom: 15px;
+    padding: 12px 15px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 88, 35, 0.3);
+    font-family: "Poppins", sans-serif;
+    font-size: 15px;
+    transition: border 0.3s ease;
+}
+
+.loginInput:focus {
+    border-color: #ff5823;
+    outline: none;
+}
+
+.loginButtons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+}
+
+.loginConfirm,
+.loginCancel {
+    flex: 1;
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+.loginConfirm {
+    margin-right: 10px;
+    background: linear-gradient(90deg, #ff5823, #ff8850);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 88, 35, 0.25);
+}
+
+.loginConfirm:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 88, 35, 0.35);
+}
+
+.loginCancel {
+    background: #fff;
+    color: #ff5823;
+    border: 2px solid #ff5823;
+    box-shadow: 0 4px 10px rgba(255, 88, 35, 0.15);
+}
+
+.loginCancel:hover {
+    background: #ff5823;
+    color: #fff;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

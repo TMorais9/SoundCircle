@@ -1,9 +1,7 @@
-import styles from "./Menu.module.css";
 import { useNavigate } from "react-router-dom";
-
+import styles from "./Menu.module.css";
 
 function Menu() {
-    
     const navigate = useNavigate();
 
     return (
@@ -12,7 +10,7 @@ function Menu() {
                 <span className="material-symbols-outlined">search</span>
             </button>
 
-            <button className={styles.button}>
+            <button className={styles.button} onClick={() => navigate("/conta")}>
                 <span className="material-symbols-outlined">person</span>
             </button>
 
@@ -20,11 +18,11 @@ function Menu() {
                 <span className="material-symbols-outlined">home</span>
             </button>
 
-            <button className={styles.button}>
+            <button className={styles.button} onClick={() => navigate("/messages")}>
                 <span className="material-symbols-outlined">message</span>
             </button>
 
-            <button className={styles.button}>
+            <button className={styles.button} onClick={() => navigate("/ai")}>
                 <span className="material-symbols-outlined">
                     network_intelligence
                 </span>

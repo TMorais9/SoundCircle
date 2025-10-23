@@ -5,6 +5,9 @@ import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 // Components
 import Home from "./pages/home";
 import Info from "./pages/info";
+import Messages from "./pages/Messages";
+import Ai from "./pages/Ai";
+import Conta from "./pages/Conta";
 
 // const Private = ({ Component }: { Component: React.FC }) => {
 //     // This component is used to check if the user is logged in, if not, it will redirect the user to the login page
@@ -15,6 +18,9 @@ import Info from "./pages/info";
 const routes = [
     { path: "/", element: <Home /> },
     { path: "/info", element: <Info /> },
+    { path: "/messages", element: <Messages /> },
+    {path: "/ai", element: <Ai /> },
+    {path: "/conta", element: <Conta /> },
     // { path: "/inicio", element: <Private Component={Home} /> },
     // { path: "/utilizadores", element: <Private Component={Users} /> },
     // { path: "/materiais", element: <Private Component={Material} /> },
