@@ -7,6 +7,14 @@ import Menu from "../components/Menu";
 function Info() {
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [fadeOut, setFadeOut] = useState(false);
+    
+    const handleBack = () => {
+        setFadeOut(true);
+        setTimeout(() => {
+            navigate("/");
+        }, 500); // Duração da animação de fade-out
+    };
 
     const person = {
         nome: "Miguel Dias",
