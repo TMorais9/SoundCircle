@@ -4,7 +4,7 @@
     align-items: center;
     background: rgba(255, 88, 35, 0.9);
     backdrop-filter: blur(10px);
-    width: clamp(320px, 70%, 480px);
+    width: clamp(340px, 70%, 480px);
     height: 75px;
     border-radius: 20px;
     box-shadow: 0 6px 18px rgba(255, 88, 35, 0.25);
@@ -32,7 +32,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff8eb;
+    color: #ffffff;
     transition: all 0.25s ease;
     cursor: pointer;
 }

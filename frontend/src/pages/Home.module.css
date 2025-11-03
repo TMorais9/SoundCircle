@@ -13,9 +13,9 @@
     width: 100%;
     max-width: 370px;
     min-height: 300px;
-    background: #fffaf3;
+    background: white;
     border-radius: 20px;
-    border: 1px solid #ff582340;
+    border: 2px solid #ff582340;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: column;

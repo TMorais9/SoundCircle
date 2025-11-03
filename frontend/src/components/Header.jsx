@@ -18,7 +18,7 @@ function Header() {
             >
                 <img
                     className={styles.logoImg}
-                    src="/soundcircle_logo.png"
+                    src="/sound_circle_white.png"
                     alt="SoundCircle logo"
                 />
             </a>
