@@ -5,7 +5,6 @@ const mensagemRoutes = require('./routes/mensagemRoutes');
 
 app.use(express.json());
 
-// Rotas
 app.use('/user_inst', userInstRoutes);
 app.use('/mensagens', mensagemRoutes);
 
