@@ -6,7 +6,26 @@ const UserInst = {
   },
 
   getByIds: (user_id, instrumento_id, callback) => {
-    db.query('SELECT * FROM User_inst WHERE user_id = ? AND instrumento_id = ?', [user_id, instrumento_id], callback);
+    db.query(
+      'SELECT * FROM User_inst WHERE user_id = ? AND instrumento_id = ?',
+      [user_id, instrumento_id],
+      callback
+    );
+  },
+
+  getByUserWithNames: (user_id, callback) => {
+    db.query(
+      `SELECT ui.user_id,
+              ui.instrumento_id,
+              i.nome AS instrumento_nome,
+              ui.nivel
+       FROM User_inst ui
+       JOIN Instrumento i ON i.id = ui.instrumento_id
+       WHERE ui.user_id = ?
+       ORDER BY i.nome ASC`,
+      [user_id],
+      callback
+    );
   },
 
   create: (data, callback) => {
@@ -26,7 +45,11 @@ const UserInst = {
   },
 
   delete: (user_id, instrumento_id, callback) => {
-    db.query('DELETE FROM User_inst WHERE user_id = ? AND instrumento_id = ?', [user_id, instrumento_id], callback);
+    db.query(
+      'DELETE FROM User_inst WHERE user_id = ? AND instrumento_id = ?',
+      [user_id, instrumento_id],
+      callback
+    );
   },
 };
 
