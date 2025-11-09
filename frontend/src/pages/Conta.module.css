@@ -228,6 +228,23 @@
     transition: border 0.3s ease;
 }
 
+.passwordGroup {
+    position: relative;
+    width: 100%;
+}
+
+.showPass {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ff5823;
+    font-size: 20px;
+}
+
 .inputText:focus,
 .inputArea:focus {
     border-color: #FF5823;
@@ -427,7 +444,6 @@
     font-size: 22px;
 }
 
-/* --- Modal de Login --- */
 .loginModalOverlay {
     position: fixed;
     inset: 0;
@@ -441,15 +457,28 @@
 }
 
 .loginModal {
-    background: #fffaf3;
-    padding: 40px 50px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(255, 88, 35, 0.25);
-    width: 90%;
-    max-width: 420px;
+    width: 95vw;
+    height: 92vh;
+    max-width: 920px;
+    max-height: 92vh;
+    background: #fffaf5;
+    border-radius: 30px;
+    padding: 35px 45px;
+    overflow-y: auto;
     text-align: center;
-    border: 1px solid rgba(255, 88, 35, 0.15);
     animation: slideUp 0.4s ease;
+    box-shadow: 0 15px 40px rgba(255, 88, 35, 0.3);
+    border: 2px solid rgba(255, 88, 35, 0.25);
+    font-family: poppins, sans-serif;
+}
+
+.loginModal::-webkit-scrollbar {
+    width: 8px;
+}
+
+.loginModal::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ff8850, #ff5823);
+    border-radius: 10px;
 }
 
 .loginModal h2 {
@@ -460,17 +489,19 @@
 
 .loginInput {
     width: 100%;
-    margin-bottom: 15px;
-    padding: 12px 15px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 88, 35, 0.3);
+    margin-bottom: 14px;
+    padding: 14px 18px;
+    border-radius: 14px;
+    border: 2px solid rgba(255, 88, 35, 0.3);
+    font-size: 16px;
     font-family: "Poppins", sans-serif;
-    font-size: 15px;
-    transition: border 0.3s ease;
+    background: white;
+    transition: all 0.3s;
 }
 
 .loginInput:focus {
     border-color: #ff5823;
+    box-shadow: 0 0 0 4px rgba(255, 88, 35, 0.15);
     outline: none;
 }
 
@@ -514,6 +545,74 @@
 .loginCancel:hover {
     background: #ff5823;
     color: #fff;
+}
+
+.registarLink {
+    margin-top: 18px;
+    font-weight: 600;
+    color: #ff5823;
+    cursor: pointer;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.registarLink:hover {
+    transform: scale(1.05);
+    text-decoration: underline;
+}
+
+.loginModal {
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.loginModal::-webkit-scrollbar {
+    width: 6px;
+}
+
+.loginModal::-webkit-scrollbar-thumb {
+    background: #ff5823;
+    border-radius: 4px;
+}
+
+.registoFotoWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.registoFotoPreview {
+    width: 120px;
+    height: 120px;
+    border-radius: 18px;
+    object-fit: cover;
+    border: 4px solid #FF5823;
+    box-shadow: 0 6px 18px rgba(255, 88, 35, 0.3);
+}
+
+.registoFotoButton {
+    background: linear-gradient(90deg, #ff5823, #ff8850);
+    padding: 8px 16px;
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s ease;
+    box-shadow: 0 4px 12px rgba(255, 88, 35, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.registoFotoButton:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 18px rgba(255, 88, 35, 0.4);
+}
+
+.registoFotoInput {
+    display: none;
 }
 
 @keyframes slideUp {
