@@ -40,25 +40,25 @@ function Home() {
             titulo: "Explora Músicos e Perfis 👥",
             texto:
                 "Na página inicial, encontras músicos recomendados com base no teu perfil. Clica em 'Ver Perfil' para conhecer mais sobre o artista, o instrumento que toca e o seu estilo musical.",
-            imagem: "/banner.png",
+            imagem: "/teste1.png",
         },
         {
             titulo: "Perfil e Características 🎸",
             texto:
                 "Cada músico tem um espaço personalizado com a sua história, talentos e características únicas. Essas tags ajudam-te a encontrar pessoas com quem tenhas mais afinidade musical.",
-            imagem: "/banner.png",
+            imagem: "/teste2.png",
         },
         {
             titulo: "Mensagens e Colaboração 💬",
             texto:
                 "Usa o chat integrado para conversar, planear ensaios ou partilhar ideias criativas. Podes trocar mensagens diretamente com outros artistas e fortalecer a tua rede de contactos.",
-            imagem: "/banner.png",
+            imagem: "/teste3.png",
         },
         {
             titulo: "A tua IA Musical 🤖",
             texto:
                 "O SoundCircle inclui uma assistente virtual inteligente que aprende com as tuas características musicais. Ela sugere músicos compatíveis, ideias criativas e até colaborações ideais!",
-            imagem: "/banner.png",
+            imagem: "/teste4.png",
         },
     ];
 
