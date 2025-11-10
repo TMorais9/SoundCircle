@@ -1,0 +1,10 @@
+{
+    "execMap": {
+        "ts": "sucrase-node"
+    },
+    "watch": [
+        "src"
+    ],
+    "ext": "ts",
+    "ignore": ["**/*.json"]
+}

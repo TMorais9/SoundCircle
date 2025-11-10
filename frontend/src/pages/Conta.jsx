@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Menu from "../components/Menu";
 import styles from "./Conta.module.css";
+import { useSignIn } from "react-auth-kit";
+import { useSignOut } from "react-auth-kit";
+
+
 
 function Conta() {
     const navigate = useNavigate();
@@ -73,14 +77,11 @@ function Conta() {
     };
 
     const handleSignOut = () => {
-        setPerfil({
-            nome: "", email: "", idade: "", instrumento: "",
-            anosExperiencia: "", descricao: "",
-            foto: "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png",
-        });
-        setCaracteristicas([]);
+        signOut();
+        localStorage.removeItem("userId");
         setMostrarLogin(true);
     };
+
 
     const [novoPerfil, setNovoPerfil] = useState({
         nome: "",
@@ -100,13 +101,24 @@ function Conta() {
         password: "",
     });
 
-    const handleLogin = () => {
-        if (loginData.email === perfil.email && loginData.password) {
+    const handleLogin = async () => {
+        try {
+            const res = await UsersAPI.login({ email: loginData.email, password: loginData.password });
+
+            signIn({
+                token: "fake_token_apenas_teste", // ⚠️ mais tarde substituímos por JWT real
+                expiresIn: 60, // 60 minutos
+                tokenType: "Bearer",
+                authState: { email: res.email, id: res.id },
+            });
+
             setMostrarLogin(false);
-        } else {
-            alert("Credenciais inválidas!");
+            localStorage.setItem("userId", res.id);
+        } catch (err) {
+            alert(err.body?.message || "Credenciais inválidas");
         }
     };
+
 
     const handleRegisto = () => {
         if (!validarEmail(novoPerfil.email)) return alert("Email inválido");

@@ -1,4 +1,5 @@
 const express = require('express');
+const config = require('./config/dotenv');
 const app = express();
 
 const userRoutes = require('./routes/userRoutes');
@@ -13,7 +14,6 @@ app.use('/instrumentos', instrumentoRoutes);
 app.use('/user_inst', userInstRoutes);
 app.use('/mensagens', mensagemRoutes);
 
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor a correr em http://localhost:${PORT}`);
+app.listen(config.port, () => {
+  console.log(`Servidor a correr em http://localhost:${config.port}`);
 });
