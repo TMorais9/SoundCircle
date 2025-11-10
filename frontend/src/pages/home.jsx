@@ -1,15 +1,40 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import useAuthUser from "react-auth-kit/hooks/useAuthUser";
 import Header from "../components/Header";
 import Menu from "../components/Menu";
 import styles from "./Home.module.css";
+import UsersAPI, { API_BASE_URL } from "../services/usersAPI";
+
+const PLACEHOLDER =
+    "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
+
+const resolvePhotoUrl = (value) => {
+    if (!value) return PLACEHOLDER;
+    if (value.startsWith("data:") || value.startsWith("http://") || value.startsWith("https://"))
+        return value;
+    if (value.startsWith("/")) return `${API_BASE_URL}${value}`;
+    return value;
+};
+
+const calcularIdade = (data) => {
+    if (!data) return null;
+    const nascimento = new Date(data);
+    if (Number.isNaN(nascimento.getTime())) return null;
+    const diff = Date.now() - nascimento.getTime();
+    return new Date(diff).getUTCFullYear() - 1970;
+};
 
 function Home() {
     const navigate = useNavigate();
+    const authUser = useAuthUser();
     const [fadeOut, setFadeOut] = useState(false);
     const [mostrarModal, setMostrarModal] = useState(false);
     const [naoMostrarNovamente, setNaoMostrarNovamente] = useState(false);
     const [paginaAtual, setPaginaAtual] = useState(0);
+    const [users, setUsers] = useState([]);
+    const [usersLoading, setUsersLoading] = useState(true);
+    const [usersError, setUsersError] = useState("");
 
     useEffect(() => {
         const skipModal = localStorage.getItem("skipInfoModal");
@@ -17,16 +42,42 @@ function Home() {
         if (!isLoggedIn && !skipModal) setMostrarModal(true);
     }, []);
 
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                setUsersLoading(true);
+                const data = await UsersAPI.listUsers();
+                if (!mounted) return;
+                setUsers(Array.isArray(data) ? data : []);
+                setUsersError("");
+            } catch (error) {
+                if (!mounted) return;
+                setUsersError(error.message || "Não foi possível carregar os utilizadores");
+            } finally {
+                if (mounted) setUsersLoading(false);
+            }
+        })();
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
+    const currentUserId =
+        authUser?.id ||
+        (typeof window !== "undefined" ? window.localStorage.getItem("userId") : null);
+
+    const handleViewProfile = (userId) => {
+        if (!userId) return;
+        setFadeOut(true);
+        setTimeout(() => navigate(`/info/${userId}`), 300);
+    };
+
+    const filteredUsers = users.filter((user) => Number(user.id) !== Number(currentUserId));
+
     const handleProfileClick = () => {
         setFadeOut(true);
         setTimeout(() => navigate("/info"), 300);
-    };
-
-    const fecharModal = () => {
-        if (naoMostrarNovamente) {
-            localStorage.setItem("skipInfoModal", "true");
-        }
-        setMostrarModal(false);
     };
 
     const paginas = [
@@ -78,333 +129,102 @@ function Home() {
         }
     };
 
+    const fecharModal = () => {
+        if (naoMostrarNovamente) {
+            localStorage.setItem("skipInfoModal", "true");
+        }
+        setMostrarModal(false);
+    };
+
+    const renderPlaceholderCards = (count = 6) =>
+        Array.from({ length: count }).map((_, index) => (
+            <div className={styles.card} key={`placeholder-${index}`}>
+                <div className={styles.cardBorderTop}></div>
+                <div className={styles.person}>
+                    <img src={PLACEHOLDER} alt="Foto de Perfil" />
+                </div>
+                <div className={styles.cardInfo}>
+                    <span className={styles.name}>Miguel Dias</span>
+                    <div className={styles.infoDetails}>
+                        <span className={styles.job}>Guitarrista, 21 anos</span>
+                    </div>
+                </div>
+                <button onClick={handleProfileClick}>Ver Perfil</button>
+            </div>
+        ));
+
+    const renderUserCards = () => {
+        if (usersLoading) {
+            return renderPlaceholderCards();
+        }
+        if (usersError || !filteredUsers.length) {
+            return renderPlaceholderCards();
+        }
+        return filteredUsers.map((user) => {
+            const idade = calcularIdade(user.data_nascimento);
+            const roleLabel =
+                user.instrumento || (user.tipo === "banda" ? "Banda" : "Artista Solo");
+            return (
+                <div className={styles.card} key={user.id}>
+                    <div className={styles.cardBorderTop}></div>
+                    <div className={styles.person}>
+                        <img src={resolvePhotoUrl(user.foto_url)} alt={`Foto de ${user.nome}`} />
+                    </div>
+                    <div className={styles.cardInfo}>
+                        <span className={styles.name}>{user.nome}</span>
+                        <div className={styles.infoDetails}>
+                            <span className={styles.job}>
+                                {roleLabel}
+                                {idade ? ` · ${idade} anos` : ""}
+                            </span>
+                        </div>
+                    </div>
+                    <button onClick={() => handleViewProfile(user.id)}>Ver Perfil</button>
+                </div>
+            );
+        });
+    };
+
     return (
         <>
             <Header />
-            <section
-                className={`${styles.cardSection} ${fadeOut ? styles.fadeOut : ""}`}>
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardBorderTop}></div>
-                    <div className={styles.person}>
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
-                            alt="Foto de Perfil"
-                        />
-                    </div>
-                    <div className={styles.cardInfo}>
-                        <span className={styles.name}>Miguel Dias</span>
-                        <div className={styles.infoDetails}>
-                            <span className={styles.job}>Guitarrista, 21 anos</span>
-                        </div>
-                    </div>
-                    <button onClick={handleProfileClick}>Ver Perfil</button>
-                </div>
+            <section className={`${styles.cardSection} ${fadeOut ? styles.fadeOut : ""}`}>
+                {renderUserCards()}
             </section>
+
             <Menu />
+
             {mostrarModal && (
                 <div className={styles.modalOverlay}>
                     <div className={styles.tutorialModal}>
                         <div className={styles.modalLeft}>
-                            <img
-                                src={paginas[paginaAtual].imagem}
-                                alt="Ilustração do tutorial"
-                            />
+                            <img src={paginas[paginaAtual].imagem} alt={paginas[paginaAtual].titulo} />
                         </div>
-
                         <div className={styles.modalRight}>
                             <h2>{paginas[paginaAtual].titulo}</h2>
                             <p>{paginas[paginaAtual].texto}</p>
-
-                            <div className={styles.checkboxArea}>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        checked={naoMostrarNovamente}
-                                        onChange={(e) =>
-                                            setNaoMostrarNovamente(e.target.checked)
-                                        }
-                                    />
-                                    Não mostrar novamente
-                                </label>
+                            <label className={styles.checkboxLabel}>
+                                <input
+                                    type="checkbox"
+                                    checked={naoMostrarNovamente}
+                                    onChange={() => setNaoMostrarNovamente(!naoMostrarNovamente)}
+                                />
+                                Não mostrar novamente
+                            </label>
+                            <div className={styles.modalButtons}>
+                                <button
+                                    className={styles.secondaryButton}
+                                    onClick={anteriorPagina}
+                                    disabled={paginaAtual === 0}>
+                                    Anterior
+                                </button>
+                                <button className={styles.primaryButton} onClick={proximaPagina}>
+                                    {paginaAtual === paginas.length - 1 ? "Concluir" : "Seguinte"}
+                                </button>
                             </div>
-
-                            <div className={styles.modalFooter}>
-                                <div className={styles.modalButtons}>
-                                    {paginaAtual > 0 && (
-                                        <button className={styles.secondaryButton} onClick={anteriorPagina}>
-                                            Anterior
-                                        </button>
-                                    )}
-                                    {paginaAtual < paginas.length - 1 ? (
-                                        <button className={styles.primaryButton} onClick={proximaPagina}>
-                                            Próximo
-                                        </button>
-                                    ) : (
-                                        <button className={styles.primaryButton} onClick={fecharModal}>
-                                            Concluir
-                                        </button>
-                                    )}
-                                    <button className={styles.skipButton} onClick={saltarTutorial}>
-                                        Saltar <span className="material-symbols-outlined">arrow_forward</span>
-                                    </button>
-                                </div>
-                            </div>
-
+                            <button className={styles.skipButton} onClick={saltarTutorial}>
+                                Saltar tutorial
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -41,6 +41,14 @@ const Mensagem = {
   delete: (id, callback) => {
     db.query('DELETE FROM mensagens WHERE id = ?', [id], callback);
   },
+
+  send: (data, callback) => {
+    db.query(
+      'INSERT INTO mensagens (remetente_id, destinatario_id, conteudo) VALUES (?, ?, ?)',
+      [data.remetente_id, data.destinatario_id, data.conteudo],
+      callback
+    );
+  },
 };
 
 module.exports = Mensagem;

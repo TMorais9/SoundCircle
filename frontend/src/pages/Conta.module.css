@@ -487,6 +487,29 @@
     margin-bottom: 25px;
 }
 
+.authError {
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(217, 48, 37, 0.12);
+    color: #d93025;
+    font-weight: 600;
+}
+
+.profileError,
+.profileSuccess {
+    margin-top: 12px;
+    font-weight: 600;
+}
+
+.profileError {
+    color: #d93025;
+}
+
+.profileSuccess {
+    color: #0f9d58;
+}
+
 .loginInput {
     width: 100%;
     margin-bottom: 14px;
@@ -545,6 +568,44 @@
 .loginCancel:hover {
     background: #ff5823;
     color: #fff;
+}
+
+.registerTraits {
+    text-align: left;
+    margin: 10px 0 20px;
+}
+
+.registerTraits p {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #444;
+}
+
+.registerTraitsOptions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.traitChip {
+    border: 1px solid rgba(255, 88, 35, 0.3);
+    border-radius: 999px;
+    padding: 6px 14px;
+    background: white;
+    color: #ff5823;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.traitChipActive {
+    background: linear-gradient(90deg, #ff5823, #ff8850);
+    color: #fff;
+    border-color: transparent;
+}
+
+.traitChip:hover {
+    border-color: #ff5823;
 }
 
 .registarLink {

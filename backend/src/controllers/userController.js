@@ -1,5 +1,50 @@
 const User = require('../models/userModel');
+const Instrumento = require('../models/instrumentoModel');
 const bcrypt = require('bcrypt');
+
+const VALID_LEVELS = ['iniciante', 'intermedio', 'avancado', 'profissional'];
+
+const runQuery = (fn, ...args) =>
+  new Promise((resolve, reject) => {
+    fn(...args, (err, result) => {
+      if (err) reject(err);
+      else resolve(result);
+    });
+  });
+
+const normalizeNivel = (nivel, anosExperiencia) => {
+  const lower = (nivel || '').toLowerCase();
+  if (VALID_LEVELS.includes(lower)) return lower;
+  const anos = Number(anosExperiencia);
+  if (!Number.isNaN(anos)) {
+    if (anos < 2) return 'iniciante';
+    if (anos < 5) return 'intermedio';
+    if (anos < 10) return 'avancado';
+    return 'profissional';
+  }
+  return 'intermedio';
+};
+
+const linkUserInstrument = async (userId, instrumentName, nivel, anosExperiencia) => {
+  const nome = (instrumentName || '').trim();
+  if (!userId || !nome) return;
+
+  let instrument = await runQuery(Instrumento.getByName, nome);
+  let instrumentoId;
+  if (instrument && instrument.length) {
+    instrumentoId = instrument[0].id;
+  } else {
+    const created = await runQuery(Instrumento.create, { nome });
+    instrumentoId = created.insertId;
+  }
+
+  const finalNivel = normalizeNivel(nivel, anosExperiencia);
+  await runQuery(UserInst.upsert, {
+    user_id: userId,
+    instrumento_id: instrumentoId,
+    nivel: finalNivel,
+  });
+};
 
 const SALT_ROUNDS = 10;
 
@@ -49,6 +94,9 @@ exports.create = async (req, res) => {
       descricao,
       foto_url,
       data_nascimento,
+      instrumento,
+      instrumentoNivel,
+      anosExperiencia,
     } = req.body;
 
     if (!nome || !email || !password || !tipo) {
@@ -61,12 +109,17 @@ exports.create = async (req, res) => {
 
     User.create(
       { nome, email, password_hash, tipo, descricao, foto_url, data_nascimento },
-      (err, result) => {
+      async (err, result) => {
         if (err) {
           if (err.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({ message: 'Já existe um user com esse email' });
           }
           return res.status(500).json({ error: err.message });
+        }
+        try {
+          await linkUserInstrument(result.insertId, instrumento, instrumentoNivel, anosExperiencia);
+        } catch (linkErr) {
+          console.error('Erro ao ligar instrumento ao user:', linkErr);
         }
         res.status(201).json({ id: result.insertId, nome, email, tipo });
       }
@@ -78,7 +131,17 @@ exports.create = async (req, res) => {
 
 exports.update = (req, res) => {
   const { id } = req.params;
-  const { nome, email, tipo, descricao, foto_url, data_nascimento } = req.body;
+  const {
+    nome,
+    email,
+    tipo,
+    descricao,
+    foto_url,
+    data_nascimento,
+    instrumento,
+    instrumentoNivel,
+    anosExperiencia,
+  } = req.body;
 
   if (!nome || !email || !tipo) {
     return res
@@ -89,7 +152,7 @@ exports.update = (req, res) => {
   User.update(
     id,
     { nome, email, tipo, descricao, foto_url, data_nascimento },
-    (err, result) => {
+    async (err, result) => {
       if (err) {
         if (err.code === 'ER_DUP_ENTRY') {
           return res.status(409).json({ message: 'Já existe um user com esse email' });
@@ -98,6 +161,11 @@ exports.update = (req, res) => {
       }
       if (result.affectedRows === 0) {
         return res.status(404).json({ message: 'User não encontrado' });
+      }
+      try {
+        await linkUserInstrument(id, instrumento, instrumentoNivel, anosExperiencia);
+      } catch (linkErr) {
+        console.error('Erro ao atualizar instrumento do user:', linkErr);
       }
       res.json({ message: 'User atualizado com sucesso' });
     }

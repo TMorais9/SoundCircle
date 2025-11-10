@@ -2,10 +2,30 @@ const db = require('../config/db');
 
 const User = {
   getAll: (callback) => {
-    db.query(
-      'SELECT id, nome, email, tipo, descricao, foto_url, data_nascimento FROM User',
-      callback
-    );
+    const sql = `
+      SELECT
+        u.id,
+        u.nome,
+        u.email,
+        u.tipo,
+        u.descricao,
+        u.foto_url,
+        u.data_nascimento,
+        inst.instrumento_nome,
+        inst.instrumentos
+      FROM User u
+      LEFT JOIN (
+        SELECT
+          ui.user_id,
+          GROUP_CONCAT(i.nome ORDER BY i.nome SEPARATOR ', ') AS instrumentos,
+          MIN(i.nome) AS instrumento_nome
+        FROM User_inst ui
+        JOIN Instrumento i ON i.id = ui.instrumento_id
+        GROUP BY ui.user_id
+      ) inst ON inst.user_id = u.id
+      ORDER BY u.nome ASC
+    `;
+    db.query(sql, callback);
   },
 
   getById: (id, callback) => {

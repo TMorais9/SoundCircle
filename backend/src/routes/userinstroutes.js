@@ -1,13 +1,14 @@
 const express = require('express');
-const { getAll } = require('../controllers/userinstcontroller');
+const { getAll, getByIds, create, update, deleteUserInst } = require('../controllers/userinstcontroller');
+const { getByUserWithNames } = require('../models/userInstModel');
 const router = express.Router();
 
 router.get('/', getAll);
-router.get('/:user_id/:instrumento_id', ctrl.getByIds);
-router.get('/user/:user_id/named', ctrl.getByUserWithNames);
+router.get('/:user_id/:instrumento_id', getByIds);
+router.get('/user/:user_id/named', getByUserWithNames);
 
-router.post('/', ctrl.create);
-router.put('/:user_id/:instrumento_id', ctrl.update);
-router.delete('/:user_id/:instrumento_id', ctrl.delete);
+router.post('/', create);
+router.put('/:user_id/:instrumento_id', update);
+router.delete('/:user_id/:instrumento_id', deleteUserInst);
 
 module.exports = router;

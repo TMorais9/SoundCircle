@@ -9,6 +9,26 @@
     margin-top: 100px;
 }
 
+.statusMessage,
+.errorMessage {
+    grid-column: 1 / -1;
+    font-family: "Poppins", sans-serif;
+    font-size: 18px;
+    text-align: center;
+    color: #444;
+}
+
+.errorMessage {
+    color: #d93025;
+}
+
+.descriptionPreview {
+    margin-top: 12px;
+    color: #555;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
 .card {
     width: 100%;
     max-width: 370px;
@@ -188,222 +208,7 @@
 }
 
 /* --- MODAL DE TUTORIAL --- */
-.modalOverlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 3000;
-    backdrop-filter: blur(4px);
-    animation: fadeIn 0.3s ease forwards;
-}
 
-.tutorialModal {
-    display: flex;
-    flex-direction: row;
-    background: #fffaf3;
-    color: #222;
-    width: 100%;
-    max-width: 1350px;
-    height: 85vh;
-    border-radius: 22px;
-    overflow: hidden;
-    box-shadow: 0 10px 40px rgba(255, 88, 35, 0.25);
-    animation: slideUp 0.3s ease;
-    border: 1px solid rgba(255, 88, 35, 0.15);
-}
-
-/* --- Parte esquerda (imagem) --- */
-.modalLeft {
-    flex: 1.2;
-    background: #ffe7d6;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-right: 2px solid rgba(255, 88, 35, 0.15);
-}
-
-.modalLeft img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.modalRight {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 45px 55px;
-    position: relative;
-    height: 100%;
-    font-family: poppins, sans-serif;
-}
-
-.modalContent {
-    flex-grow: 1;
-    display: flex;
-}
-
-.modalRight h2 {
-    color: #ff5823;
-    font-weight: 700;
-    font-size: 28px;
-    margin-bottom: 18px;
-}
-
-.modalRight p {
-    font-size: 17px;
-    line-height: 1.7;
-    margin-bottom: 20px;
-    color: #333;
-}
-
-.checkboxArea {
-    margin-top: 20px;
-    padding-bottom: 3px;
-    font-size: 14px;
-}
-
-.checkboxArea input {
-    margin-right: 8px;
-    transform: scale(1.2);
-    accent-color: #ff5823;
-}
-
-.modalFooter {
-    display: flex;
-    justify-content: space-between;
-    /* 🔸 saltar à esquerda, botões à direita */
-    align-items: center;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255, 88, 35, 0.15);
-}
-
-.modalButtons {
-    display: flex;
-    gap: 12px;
-}
-
-.primaryButton {
-    padding: 12px 28px;
-    border: none;
-    border-radius: 10px;
-    background: linear-gradient(90deg, #ff5823, #ff8850);
-    color: white;
-    font-weight: 600;
-    font-size: 16px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(255, 88, 35, 0.25);
-    transition: transform 0.2s ease, box-shadow 0.3s ease;
-}
-
-.primaryButton:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(255, 88, 35, 0.35);
-}
-
-.secondaryButton {
-    padding: 12px 28px;
-    border: 2px solid #ff5823;
-    border-radius: 10px;
-    background: white;
-    color: #ff5823;
-    font-weight: 600;
-    font-size: 16px;
-    cursor: pointer;
-    transition: 0.3s ease;
-}
-
-.secondaryButton:hover {
-    background: #ff5823;
-    color: white;
-}
-
-.skipButton {
-    background: transparent;
-    border: none;
-    color: #888;
-    font-size: 15px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    cursor: pointer;
-    transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.skipButton span {
-    font-size: 20px;
-    transition: transform 0.2s ease;
-}
-
-.skipButton:hover {
-    color: #ff5823;
-    transform: translateX(3px);
-}
-
-.skipButton:hover span {
-    transform: translateX(3px);
-}
-
-.modalContent {
-    position: relative;
-    overflow: hidden;
-}
-
-.modalLeft img.pageIn {
-    animation: scImageIn 360ms ease-out both;
-}
-
-.rightPageWrap.pageIn.delayed {
-    animation-delay: 80ms;
-}
-
-@keyframes scImageIn {
-    from {
-        transform: translateX(-24px) scale(0.985);
-        opacity: 0;
-        filter: saturate(0.8) blur(0.5px);
-    }
-
-    to {
-        transform: translateX(0) scale(1);
-        opacity: 1;
-        filter: none;
-    }
-}
-
-@keyframes scTextIn {
-    from {
-        transform: translateX(24px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-.modalButtons .primaryButton,
-.modalButtons .secondaryButton,
-.modalButtons .skipButton {
-    animation: scButtonsIn 320ms ease-out both;
-    animation-delay: 120ms;
-}
-
-@keyframes scButtonsIn {
-    from {
-        transform: translateY(6px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
 
 
 /* --- Animações --- */
@@ -450,4 +255,109 @@
     .modalRight h2 {
         font-size: 22px;
     }
+}
+/* --- MODAL DE TUTORIAL (layout original) --- */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease forwards;
+}
+
+.tutorialModal {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    max-width: 1400px;
+    height: 85vh;
+    background: #fffaf3;
+    border-radius: 22px;
+    box-shadow: 0 10px 40px rgba(255, 88, 35, 0.25);
+    overflow: hidden;
+    border: 1px solid rgba(255, 88, 35, 0.15);
+    animation: slideUp 0.3s ease;
+    color: #222;
+    font-family: poppins, sans-serif;
+}
+
+.modalLeft {
+    flex: 1.2;
+    background: #ffe7d6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modalLeft img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.modalRight {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 45px 55px;
+}
+
+.modalRight h2 {
+    color: #ff5823;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 18px;
+}
+
+.modalRight p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #333;
+}
+
+.modalButtons {
+    display: flex;
+    gap: 12px;
+    margin-top: auto;
+}
+
+.primaryButton,
+.secondaryButton {
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.primaryButton {
+    background: linear-gradient(90deg, #ff5823, #ff8850);
+    color: white;
+}
+
+.secondaryButton {
+    border: 2px solid #ff5823;
+    background: white;
+    color: #ff5823;
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 18px 0;
+    font-size: 14px;
+}
+
+.skipButton {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    margin-top: 10px;
 }

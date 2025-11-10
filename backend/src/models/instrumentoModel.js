@@ -9,6 +9,10 @@ const Instrumento = {
     db.query('SELECT id, nome FROM Instrumento WHERE id = ?', [id], callback);
   },
 
+  getByName: (nome, callback) => {
+    db.query('SELECT id, nome FROM Instrumento WHERE LOWER(nome) = LOWER(?) LIMIT 1', [nome], callback);
+  },
+
   create: ({ nome }, callback) => {
     db.query('INSERT INTO Instrumento (nome) VALUES (?)', [nome], callback);
   },

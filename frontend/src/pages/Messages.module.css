@@ -8,7 +8,6 @@
     padding: 25px;
     margin-top: 100px;
     box-sizing: border-box;
-    background: linear-gradient(180deg, #fffaf3 0%, #fef6de 40%, #fcefd2 100%);
     color: #222;
     font-family: "Poppins", sans-serif;
     animation: fadeIn 0.6s ease forwards;
@@ -85,6 +84,18 @@
     gap: 18px;
     width: 100%;
     max-width: 1000px;
+}
+
+.statusMessage,
+.errorMessage {
+    font-size: 16px;
+    text-align: center;
+    color: #555;
+    padding: 20px 0;
+}
+
+.errorMessage {
+    color: #d93025;
 }
 
 .messageCard {

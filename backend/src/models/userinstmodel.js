@@ -36,6 +36,16 @@ const UserInst = {
     );
   },
 
+  upsert: (data, callback) => {
+    db.query(
+      `INSERT INTO User_inst (user_id, instrumento_id, nivel)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE nivel = VALUES(nivel)`,
+      [data.user_id, data.instrumento_id, data.nivel],
+      callback
+    );
+  },
+
   update: (user_id, instrumento_id, nivel, callback) => {
     db.query(
       'UPDATE User_inst SET nivel = ? WHERE user_id = ? AND instrumento_id = ?',
