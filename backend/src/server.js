@@ -5,7 +5,7 @@ const app = express();
 
 const userRoutes = require('./routes/userRoutes');
 const instrumentoRoutes = require('./routes/instrumentoRoutes');
-const userInstRoutes = require('./routes/userInstRoutes');
+const userInstRoutes = require('./routes/userinstroutes');
 const mensagemRoutes = require('./routes/mensagemRoutes');
 
 app.use(cors({

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const mensagemController = require('../controllers/mensagemController');
+const mensagemController = require('../controllers/mensagemcontroller');
 
 router.get('/', mensagemController.getAll);
 router.get('/user/:user_id', mensagemController.getByUser);

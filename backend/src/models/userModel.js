@@ -103,7 +103,8 @@ const User = {
     db.query(
       `SELECT ui.instrumento_id,
               i.nome AS instrumento_nome,
-              ui.nivel
+              ui.nivel,
+              ui.anos_experiencia
        FROM User_inst ui
        JOIN Instrumento i ON i.id = ui.instrumento_id
        WHERE ui.user_id = ?

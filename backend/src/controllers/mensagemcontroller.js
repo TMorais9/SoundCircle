@@ -1,4 +1,4 @@
-const Mensagem = require('../models/mensagemModel');
+const Mensagem = require('../models/mensagemmodel');
 
 exports.getAll = (req, res) => {
   Mensagem.getAll((err, results) => {

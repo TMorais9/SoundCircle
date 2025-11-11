@@ -85,6 +85,9 @@ const mapPerfilFromResponse = (payload) => {
     if (!payload) return { ...INITIAL_PERFIL_STATE };
     const user = payload.user || payload;
     const instrumento = payload.instrumentos?.[0];
+    const anosExperienciaValue =
+        instrumento?.anos_experiencia ?? instrumento?.anosExperiencia ?? null;
+
     return {
         nome: user?.nome ?? "",
         email: user?.email ?? "",
@@ -92,7 +95,10 @@ const mapPerfilFromResponse = (payload) => {
         dataNascimento: toDateInputValue(user?.data_nascimento),
         tipo: user?.tipo || "solo",
         instrumento: instrumento?.instrumento_nome || "",
-        anosExperiencia: instrumento?.nivel || "",
+        anosExperiencia:
+            anosExperienciaValue === null || anosExperienciaValue === undefined
+                ? ""
+                : String(anosExperienciaValue),
         descricao: user?.descricao || "",
         foto: resolvePhotoUrl(user?.foto_url),
     };
@@ -274,6 +280,13 @@ function Conta() {
             setPerfilFotoFile(null);
         }
 
+        const anosExperienciaValue =
+            perfil.anosExperiencia === "" ? null : Number(perfil.anosExperiencia);
+        const safeAnosExperiencia =
+            Number.isFinite(anosExperienciaValue) && anosExperienciaValue >= 0
+                ? anosExperienciaValue
+                : null;
+
         const payload = {
             nome: perfil.nome.trim(),
             email: perfil.email.trim(),
@@ -282,8 +295,9 @@ function Conta() {
             foto_url: fotoUrlPayload,
             data_nascimento: perfil.dataNascimento || null,
             instrumento: perfil.instrumento,
-            instrumentoNivel: experienciaParaNivel(perfil.anosExperiencia),
-            anosExperiencia: perfil.anosExperiencia,
+            instrumentoNivel:
+                safeAnosExperiencia !== null ? experienciaParaNivel(safeAnosExperiencia) : null,
+            anosExperiencia: safeAnosExperiencia,
         };
 
         await UsersAPI.updateProfile(currentUserId, payload);
@@ -411,6 +425,13 @@ function Conta() {
                     ? novoPerfil.foto
                     : PLACEHOLDER_PHOTO;
 
+            const anosExperienciaValue =
+                novoPerfil.anosExperiencia === "" ? null : Number(novoPerfil.anosExperiencia);
+            const safeAnosExperiencia =
+                Number.isFinite(anosExperienciaValue) && anosExperienciaValue >= 0
+                    ? anosExperienciaValue
+                    : null;
+
             await UsersAPI.register({
                 nome: novoPerfil.nome,
                 email: novoPerfil.email,
@@ -420,8 +441,9 @@ function Conta() {
                 foto_url: fotoUrlPayload,
                 data_nascimento: novoPerfil.dataNascimento || null,
                 instrumento: novoPerfil.instrumento,
-                instrumentoNivel: experienciaParaNivel(novoPerfil.anosExperiencia),
-                anosExperiencia: novoPerfil.anosExperiencia,
+                instrumentoNivel:
+                    safeAnosExperiencia !== null ? experienciaParaNivel(safeAnosExperiencia) : null,
+                anosExperiencia: safeAnosExperiencia,
             });
             const loggedUser = await authenticateUser(novoPerfil.email, novoPerfil.password);
             if (novoPerfilFotoFile && loggedUser?.id) {
@@ -785,7 +807,11 @@ function Conta() {
                             <>
                                 <h1 className={styles.name}>{perfil.nome}</h1>
                                 <p className={styles.basicInfo}>{perfil.idade} anos · {perfil.instrumento}</p>
-                                <p className={styles.experience}>A tocar há {perfil.anosExperiencia} anos</p>
+                                {perfil.anosExperiencia !== "" && perfil.anosExperiencia !== null && (
+                                    <p className={styles.experience}>
+                                        A tocar há {perfil.anosExperiencia} ano(s)
+                                    </p>
+                                )}
                                 <p className={styles.basicInfo}>{perfil.email}</p>
                             </>
                         )}
