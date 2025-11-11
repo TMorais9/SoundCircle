@@ -12,12 +12,24 @@ const User = {
         u.foto_url,
         u.data_nascimento,
         inst.instrumento_nome,
-        inst.instrumentos
+        inst.instrumento_nivel,
+        inst.instrumentos,
+        inst.instrumentos_detalhes
       FROM User u
       LEFT JOIN (
         SELECT
           ui.user_id,
           GROUP_CONCAT(i.nome ORDER BY i.nome SEPARATOR ', ') AS instrumentos,
+          GROUP_CONCAT(CONCAT(i.nome, '::', ui.nivel) ORDER BY i.nome SEPARATOR '||') AS instrumentos_detalhes,
+          SUBSTRING_INDEX(
+            SUBSTRING_INDEX(
+              GROUP_CONCAT(CONCAT(i.nome, '::', ui.nivel) ORDER BY i.nome SEPARATOR '||'),
+              '||',
+              1
+            ),
+            '::',
+            -1
+          ) AS instrumento_nivel,
           MIN(i.nome) AS instrumento_nome
         FROM User_inst ui
         JOIN Instrumento i ON i.id = ui.instrumento_id

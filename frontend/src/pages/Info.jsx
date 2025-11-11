@@ -17,10 +17,21 @@ const resolvePhotoUrl = (value) => {
     return value;
 };
 
+const toDateInputValue = (value) => {
+    if (!value) return "";
+    return value.split("T")[0];
+};
+
+const parseDateOnly = (value) => {
+    if (!value) return null;
+    const [year, month, day] = toDateInputValue(value).split("-").map(Number);
+    if (!year || !month || !day) return null;
+    return new Date(Date.UTC(year, month - 1, day));
+};
+
 const calcularIdade = (data) => {
-    if (!data) return null;
-    const nascimento = new Date(data);
-    if (Number.isNaN(nascimento.getTime())) return null;
+    const nascimento = parseDateOnly(data);
+    if (!nascimento) return null;
     const diff = Date.now() - nascimento.getTime();
     return new Date(diff).getUTCFullYear() - 1970;
 };
