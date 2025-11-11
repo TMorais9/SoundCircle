@@ -104,6 +104,30 @@
     border-bottom-left-radius: 4px;
 }
 
+.aiMatches {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.aiMatches button {
+    background: linear-gradient(90deg, #ff5823, #ff8850);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-weight: 600;
+    padding: 8px 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(255, 88, 35, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.aiMatches button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(255, 88, 35, 0.35);
+}
+
 .aiInputArea {
     display: flex;
     align-items: center;
@@ -130,6 +154,8 @@
     font-size: 22px;
     padding: 10px 14px;
     border-radius: 50%;
+    justify-content: center;
+    align-items: center;
     margin-left: 10px;
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(255, 88, 35, 0.25);

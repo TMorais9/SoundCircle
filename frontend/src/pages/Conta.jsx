@@ -44,10 +44,21 @@ const INITIAL_LOGIN_STATE = {
     password: "",
 };
 
+const toDateInputValue = (value) => {
+    if (!value) return "";
+    return value.split("T")[0];
+};
+
+const parseDateOnly = (value) => {
+    if (!value) return null;
+    const [year, month, day] = toDateInputValue(value).split("-").map(Number);
+    if (!year || !month || !day) return null;
+    return new Date(Date.UTC(year, month, day));
+};
+
 const calcularIdade = (dataNascimento) => {
-    if (!dataNascimento) return "";
-    const nascimento = new Date(dataNascimento);
-    if (Number.isNaN(nascimento.getTime())) return "";
+    const nascimento = parseDateOnly(dataNascimento);
+    if (!nascimento) return "";
     const diferenca = Date.now() - nascimento.getTime();
     const idadeData = new Date(diferenca);
     return Math.abs(idadeData.getUTCFullYear() - 1970);
@@ -78,7 +89,7 @@ const mapPerfilFromResponse = (payload) => {
         nome: user?.nome ?? "",
         email: user?.email ?? "",
         idade: user?.data_nascimento ? calcularIdade(user.data_nascimento) : "",
-        dataNascimento: user?.data_nascimento || "",
+        dataNascimento: toDateInputValue(user?.data_nascimento),
         tipo: user?.tipo || "solo",
         instrumento: instrumento?.instrumento_nome || "",
         anosExperiencia: instrumento?.nivel || "",
