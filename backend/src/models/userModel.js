@@ -91,6 +91,14 @@ const User = {
     );
   },
 
+  updatePhoto: (id, foto_url, callback) => {
+    db.query(
+      'UPDATE User SET foto_url = ? WHERE id = ?',
+      [foto_url, id],
+      callback
+    );
+  },
+
   delete: (id, callback) => {
     db.query('DELETE FROM User WHERE id = ?', [id], callback);
   },

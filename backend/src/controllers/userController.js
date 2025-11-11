@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const bcrypt = require('bcrypt');
 const User = require('../models/userModel');
 const Instrumento = require('../models/instrumentoModel');
@@ -57,6 +59,40 @@ const linkUserInstrument = async (userId, instrumentName, nivel, anosExperiencia
 };
 
 const SALT_ROUNDS = 10;
+const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
+const PUBLIC_UPLOAD_PREFIX = '/uploads';
+
+const ensureUploadsDir = () => {
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+};
+
+ensureUploadsDir();
+
+const deleteUploadedFile = (storedPath) => {
+  if (!storedPath) return;
+
+  const resolveAbsolutePath = () => {
+    if (storedPath.startsWith(PUBLIC_UPLOAD_PREFIX)) {
+      const relative = storedPath.replace(/^\//, '');
+      return path.join(__dirname, '..', relative);
+    }
+    if (storedPath.startsWith(UPLOADS_DIR)) {
+      return storedPath;
+    }
+    return null;
+  };
+
+  const absolutePath = resolveAbsolutePath();
+  if (!absolutePath) return;
+
+  fs.unlink(absolutePath, (err) => {
+    if (err && err.code !== 'ENOENT') {
+      console.error('Falha ao remover foto antiga:', err.message);
+    }
+  });
+};
 
 exports.getAll = (req, res) => {
   User.getAll((err, rows) => {
@@ -232,6 +268,41 @@ exports.login = (req, res) => {
     } catch (e) {
       res.status(500).json({ error: e.message });
     }
+  });
+};
+
+exports.uploadPhoto = (req, res) => {
+  const { id } = req.params;
+
+  if (!req.file) {
+    return res.status(400).json({ message: 'Nenhum ficheiro enviado' });
+  }
+
+  const tempFilePath = req.file.path || path.join(UPLOADS_DIR, req.file.filename);
+
+  User.getById(id, (err, rows) => {
+    if (err) {
+      deleteUploadedFile(tempFilePath);
+      return res.status(500).json({ error: err.message });
+    }
+    if (!rows.length) {
+      deleteUploadedFile(tempFilePath);
+      return res.status(404).json({ message: 'User não encontrado' });
+    }
+
+    const oldPhoto = rows[0].foto_url;
+    const publicUrl = `${PUBLIC_UPLOAD_PREFIX}/${req.file.filename}`;
+
+    User.updatePhoto(id, publicUrl, (updateErr) => {
+      if (updateErr) {
+        deleteUploadedFile(tempFilePath);
+        return res.status(500).json({ error: updateErr.message });
+      }
+      if (oldPhoto && oldPhoto !== publicUrl) {
+        deleteUploadedFile(oldPhoto);
+      }
+      res.json({ url: publicUrl });
+    });
   });
 };
 
