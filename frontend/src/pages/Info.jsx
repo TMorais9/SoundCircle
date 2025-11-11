@@ -36,23 +36,74 @@ const calcularIdade = (data) => {
     return new Date(diff).getUTCFullYear() - 1970;
 };
 
+const inferYearsFromNivel = (nivel) => {
+    const normalized = (nivel || "").toLowerCase();
+    switch (normalized) {
+        case "iniciante":
+            return 1;
+        case "intermedio":
+            return 3;
+        case "avancado":
+            return 7;
+        case "profissional":
+            return 12;
+        default:
+            return null;
+    }
+};
+
+const resolveInstrumentExperience = (instrumento) => {
+    if (!instrumento) return null;
+    const value =
+        instrumento.anos_experiencia ?? instrumento.anosExperiencia ?? instrumento.anosExperienciaEst ?? null;
+    if (value !== null && value !== undefined) {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+    }
+    return inferYearsFromNivel(instrumento.nivel);
+};
+
+const formatNivelLabel = (nivel) => {
+    if (!nivel) return "";
+    return nivel.charAt(0).toUpperCase() + nivel.slice(1);
+};
+
 const mapProfile = (payload) => {
     if (!payload) return null;
     const user = payload.user || payload;
     const instrumentos = payload.instrumentos || [];
+    const instrumentosDetalhes = instrumentos.map((inst) => {
+        const anos = resolveInstrumentExperience(inst);
+        return {
+            id: inst.instrumento_id,
+            nome: inst.instrumento_nome,
+            nivel: inst.nivel,
+            anosExperiencia: anos,
+            rotulo:
+                anos !== null
+                    ? `${inst.instrumento_nome} · ${anos} ${anos === 1 ? "ano" : "anos"}`
+                    : inst.nivel
+                        ? `${inst.instrumento_nome} · ${formatNivelLabel(inst.nivel)}`
+                        : inst.instrumento_nome,
+        };
+    });
+
     return {
         id: user.id,
         nome: user.nome,
         idade: calcularIdade(user.data_nascimento),
         instrumento:
-            instrumentos[0]?.instrumento_nome ||
+            instrumentosDetalhes[0]?.nome ||
             user.instrumento ||
             (user.tipo === "banda" ? "Banda" : "Artista Solo"),
-        anosExperiencia: instrumentos[0]?.nivel || null,
+        anosExperiencia: instrumentosDetalhes[0]?.anosExperiencia ?? null,
         descricao: user.descricao,
         foto: resolvePhotoUrl(user.foto_url),
-        caracteristicas: instrumentos.map((i) => i.instrumento_nome),
+        caracteristicas: instrumentosDetalhes.length
+            ? instrumentosDetalhes.map((i) => i.rotulo)
+            : [],
         tipo: user.tipo,
+        instrumentosDetalhes,
     };
 };
 
@@ -142,11 +193,13 @@ function Info() {
                                     {profile?.idade ? `${profile.idade} anos` : "Idade não definida"} ·{" "}
                                     {profile?.instrumento}
                                 </p>
-                                {profile?.anosExperiencia && (
+                                {profile?.anosExperiencia !== null &&
+                                    profile?.anosExperiencia !== undefined &&
+                                    profile?.anosExperiencia !== "" && (
                                     <p className={styles.experience}>
-                                        A tocar há {profile.anosExperiencia} anos
+                                        A tocar há {profile.anosExperiencia} ano(s)
                                     </p>
-                                )}
+                                    )}
                             </div>
                             <div className={styles.description}>
                                 <h2>Sobre</h2>

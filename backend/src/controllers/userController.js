@@ -1,6 +1,7 @@
+const bcrypt = require('bcrypt');
 const User = require('../models/userModel');
 const Instrumento = require('../models/instrumentoModel');
-const bcrypt = require('bcrypt');
+const UserInst = require('../models/userinstmodel');
 
 const VALID_LEVELS = ['iniciante', 'intermedio', 'avancado', 'profissional'];
 
@@ -12,14 +13,22 @@ const runQuery = (fn, ...args) =>
     });
   });
 
+const normalizeAnosExperiencia = (value) => {
+  if (value === undefined || value === null || value === '') return null;
+  const parsed = Number(value);
+  if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+  return null;
+};
+
 const normalizeNivel = (nivel, anosExperiencia) => {
   const lower = (nivel || '').toLowerCase();
   if (VALID_LEVELS.includes(lower)) return lower;
-  const anos = Number(anosExperiencia);
-  if (!Number.isNaN(anos)) {
-    if (anos < 2) return 'iniciante';
-    if (anos < 5) return 'intermedio';
-    if (anos < 10) return 'avancado';
+
+  const normalizedYears = normalizeAnosExperiencia(anosExperiencia);
+  if (normalizedYears !== null) {
+    if (normalizedYears < 2) return 'iniciante';
+    if (normalizedYears < 5) return 'intermedio';
+    if (normalizedYears < 10) return 'avancado';
     return 'profissional';
   }
   return 'intermedio';
@@ -43,6 +52,7 @@ const linkUserInstrument = async (userId, instrumentName, nivel, anosExperiencia
     user_id: userId,
     instrumento_id: instrumentoId,
     nivel: finalNivel,
+    anos_experiencia: normalizeAnosExperiencia(anosExperiencia),
   });
 };
 

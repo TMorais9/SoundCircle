@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const instrumentoController = require('../controllers/instrumentocontroller');
+const instrumentoController = require('../controllers/instrumentoController');
 
 router.get('/', instrumentoController.getAll);
 router.get('/:id', instrumentoController.getById);
