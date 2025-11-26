@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import useAuthUser from "react-auth-kit/hooks/useAuthUser";
 import Header from "../components/Header";
 import Menu from "../components/Menu";
-import styles from "./Ai.module.css";
+import styles from "./ai.module.css";
 import UsersAPI from "../services/usersAPI";
 
 const PLACEHOLDER =

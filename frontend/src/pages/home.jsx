@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import useAuthUser from "react-auth-kit/hooks/useAuthUser";
 import Header from "../components/Header";
 import Menu from "../components/Menu";
-import styles from "./Home.module.css";
+import styles from "./home.module.css";
 import UsersAPI, { API_BASE_URL } from "../services/usersAPI";
 
 const PLACEHOLDER =

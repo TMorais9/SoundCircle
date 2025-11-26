@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Menu from "../components/Menu";
-import styles from "./Conta.module.css";
+import styles from "./conta.module.css";
 import useSignIn from "react-auth-kit/hooks/useSignIn";
 import useSignOut from "react-auth-kit/hooks/useSignOut";
 import useIsAuthenticated from "react-auth-kit/hooks/useIsAuthenticated";

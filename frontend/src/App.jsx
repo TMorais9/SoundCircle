@@ -4,9 +4,9 @@ import AuthProvider from "react-auth-kit";
 import createAuthStore from "react-auth-kit/store/createAuthStore";
 import Home from "./pages/home";
 import Info from "./pages/info";
-import Messages from "./pages/Messages";
-import Ai from "./pages/Ai";
-import Conta from "./pages/Conta";
+import Messages from "./pages/messages";
+import Ai from "./pages/ai";
+import Conta from "./pages/conta";
 
 const store = createAuthStore("cookie", {
     authName: "_auth",
