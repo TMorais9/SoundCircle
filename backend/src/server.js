@@ -9,6 +9,8 @@ const userRoutes = require('./routes/userRoutes');
 const instrumentoRoutes = require('./routes/instrumentoRoutes');
 const userInstRoutes = require('./routes/userinstroutes');
 const mensagemRoutes = require('./routes/mensagemRoutes');
+const caracteristicaRoutes = require('./routes/caracteristicaRoutes');
+const userCarRoutes = require('./routes/usercarRoutes');
 
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
@@ -26,6 +28,8 @@ app.use('/users', userRoutes);
 app.use('/instrumentos', instrumentoRoutes);
 app.use('/user_inst', userInstRoutes);
 app.use('/mensagens', mensagemRoutes);
+app.use('/caracteristicas', caracteristicaRoutes);
+app.use('/usercar', userCarRoutes);
 
 app.listen(config.port, () => {
   console.log(`Servidor a correr em http://localhost:${config.port}`);
