@@ -23,7 +23,7 @@ spec:
         spec:
             containers:
                 - name: backend
-                  image: TMorais9/soundcircle-backend:latest
+                  image: tmorais04/soundcircle-backend:latest
                   imagePullPolicy: IfNotPresent
                   ports:
                       - containerPort: 3000

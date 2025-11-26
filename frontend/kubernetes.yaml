@@ -21,7 +21,7 @@ spec:
         spec:
             containers:
                 - name: frontend
-                  image: TMorais9/soundcircle-frontend:latest
+                  image: tmorais04/soundcircle-frontend:latest
                   imagePullPolicy: IfNotPresent
                   ports:
                       - containerPort: 3000
