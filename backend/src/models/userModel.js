@@ -1,4 +1,3 @@
-// models/userModel.js
 const db = require('../config/db');
 
 const User = {
@@ -67,7 +66,6 @@ const User = {
     );
   },
 
-  // ✅ ESTE É O MÉTODO NOVO
   updatePhoto: (id, foto_url, callback) => {
     db.query(
       'UPDATE User SET foto_url = ? WHERE id = ?',
