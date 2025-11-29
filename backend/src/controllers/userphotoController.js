@@ -1,5 +1,12 @@
-const supabase = require('../utils/supabase');
+const fs = require('fs');
+const path = require('path');
 const User = require('../models/userModel');
+
+const UPLOADS_DIR = path.resolve(__dirname, '..', '..', 'uploads');
+
+const ensureUploadsDir = async () => {
+  await fs.promises.mkdir(UPLOADS_DIR, { recursive: true });
+};
 
 exports.uploadAvatar = async (req, res) => {
   try {
@@ -8,29 +15,21 @@ exports.uploadAvatar = async (req, res) => {
 
     if (!file) return res.status(400).json({ message: "Nenhum ficheiro enviado" });
 
-    const ext = file.originalname.split('.').pop();
-    const filePath = `avatars/${id}-${Date.now()}.${ext}`;
+    await ensureUploadsDir();
 
-    const { error } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, file.buffer, {
-        upsert: true,
-        contentType: file.mimetype,
-      });
+    const ext = path.extname(file.originalname || '') || '.png';
+    const filename = `${id}-${Date.now()}${ext}`;
+    const filePath = path.join(UPLOADS_DIR, filename);
 
-    if (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Erro ao enviar imagem para Supabase", error });
-    }
+    await fs.promises.writeFile(filePath, file.buffer);
 
-    const { data: publicData } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(filePath);
-
-    const publicUrl = publicData.publicUrl;
+    const publicUrl = `/uploads/${filename}`;
 
     User.updatePhoto(id, publicUrl, (err) => {
-      if (err) return res.status(500).json({ error: err.message });
+      if (err) {
+        fs.promises.unlink(filePath).catch(() => {});
+        return res.status(500).json({ error: err.message });
+      }
 
       res.json({
         message: "Avatar atualizado com sucesso",
