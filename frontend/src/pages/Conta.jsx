@@ -175,7 +175,7 @@ function Conta() {
             const user = await UsersAPI.login({ email, password: passwordValue });
             try {
                 await fetchPerfil(user.id);
-            } catch (error) {
+            } catch {
                 const fallbackPerfil = mapPerfilFromResponse({ user });
                 setPerfil(fallbackPerfil);
                 setPerfilOriginal(fallbackPerfil);
