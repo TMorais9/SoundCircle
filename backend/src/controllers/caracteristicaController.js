@@ -2,7 +2,10 @@ const Caracteristica = require('../models/caracteristicaModel');
 
 exports.getAll = (req, res) => {
   Caracteristica.getAll((err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
+    if (err) {
+      console.error('Erro ao obter características:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
     res.json(rows);
   });
 };

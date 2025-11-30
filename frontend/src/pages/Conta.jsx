@@ -20,9 +20,11 @@ const INITIAL_PERFIL_STATE = {
     idade: "",
     dataNascimento: "",
     localizacao: "",
+    sexo: "",
     tipo: "solo",
     instrumento: "",
     anosExperiencia: "",
+    inicioExperiencia: "",
     descricao: "",
     foto: PLACEHOLDER_PHOTO,
 };
@@ -32,7 +34,8 @@ const INITIAL_REGISTER_STATE = {
     email: "",
     dataNascimento: "",
     localizacao: "",
-    sexo: "Masculino",
+    inicioExperiencia: "",
+    sexo: "",
     instrumento: "",
     anosExperiencia: "",
     descricao: "",
@@ -45,6 +48,35 @@ const INITIAL_LOGIN_STATE = {
     email: "",
     password: "",
 };
+
+const DISTRICTS = [
+    "Aveiro",
+    "Beja",
+    "Braga",
+    "Bragança",
+    "Castelo Branco",
+    "Coimbra",
+    "Évora",
+    "Faro",
+    "Guarda",
+    "Leiria",
+    "Lisboa",
+    "Portalegre",
+    "Porto",
+    "Santarém",
+    "Setúbal",
+    "Viana do Castelo",
+    "Vila Real",
+    "Viseu",
+];
+
+const INSTRUMENTS = [
+    "Guitarrista",
+    "Baixista",
+    "Baterista",
+    "Pianista",
+    "Vocalista",
+];
 
 const toDateInputValue = (value) => {
     if (!value) return "";
@@ -75,6 +107,34 @@ const experienciaParaNivel = (anos) => {
     return "profissional";
 };
 
+const formatMonthValue = (year, monthIndexZeroBased) => {
+    const safeYear = year ?? "";
+    const safeMonth = (monthIndexZeroBased ?? 0) + 1;
+    const paddedMonth = String(safeMonth).padStart(2, "0");
+    return `${safeYear}-${paddedMonth}`;
+};
+
+const aproxInicioPorAnos = (anos) => {
+    const parsed = Number(anos);
+    if (!Number.isFinite(parsed) || parsed < 0) return "";
+    const agora = new Date();
+    const ano = agora.getFullYear() - Math.floor(parsed);
+    const mes = agora.getMonth();
+    return formatMonthValue(ano, mes);
+};
+
+const anosDesdeInicio = (inicio) => {
+    if (!inicio) return null;
+    const [anoStr, mesStr] = inicio.split("-");
+    const ano = Number(anoStr);
+    const mes = Number(mesStr);
+    if (!Number.isFinite(ano) || !Number.isFinite(mes)) return null;
+    const agora = new Date();
+    const mesesTotais = (agora.getFullYear() - ano) * 12 + (agora.getMonth() + 1 - mes);
+    if (!Number.isFinite(mesesTotais) || mesesTotais < 0) return null;
+    return Math.floor(mesesTotais / 12);
+};
+
 const resolvePhotoUrl = (value) => {
     if (!value) return PLACEHOLDER_PHOTO;
     if (value.startsWith("data:") || value.startsWith("http://") || value.startsWith("https://"))
@@ -89,10 +149,13 @@ const mapPerfilFromResponse = (payload) => {
     const instrumento = payload.instrumentos?.[0];
     const anosExperienciaValue =
         instrumento?.anos_experiencia ?? instrumento?.anosExperiencia ?? null;
+    const caracteristicasIds = (payload.caracteristicas || []).map((c) => c.id);
+    const inicioExperiencia = aproxInicioPorAnos(anosExperienciaValue);
 
     return {
         nome: user?.nome ?? "",
         email: user?.email ?? "",
+        sexo: user?.sexo || "",
         idade: user?.data_nascimento ? calcularIdade(user.data_nascimento) : "",
         dataNascimento: toDateInputValue(user?.data_nascimento),
         localizacao: user?.localizacao || "",
@@ -102,6 +165,8 @@ const mapPerfilFromResponse = (payload) => {
             anosExperienciaValue === null || anosExperienciaValue === undefined
                 ? ""
                 : String(anosExperienciaValue),
+        inicioExperiencia,
+        caracteristicasIds,
         descricao: user?.descricao || "",
         foto: resolvePhotoUrl(user?.foto_url),
     };
@@ -140,8 +205,8 @@ function Conta() {
     const [confirmPassword, setConfirmPassword] = useState("");
 
     const [perfilOriginal, setPerfilOriginal] = useState({ ...INITIAL_PERFIL_STATE });
-    const [caracteristicas, setCaracteristicas] = useState([...DEFAULT_TRAITS]);
-    const [caracteristicasOriginais, setCaracteristicasOriginais] = useState([...DEFAULT_TRAITS]);
+    const [caracteristicasDisponiveis, setCaracteristicasDisponiveis] = useState([]);
+    const [caracteristicasOriginais, setCaracteristicasOriginais] = useState([]);
     const [mostrarOpcoes, setMostrarOpcoes] = useState(false);
     const [authError, setAuthError] = useState("");
     const [isAuthLoading, setIsAuthLoading] = useState(false);
@@ -151,6 +216,7 @@ function Conta() {
     const [perfilMensagem, setPerfilMensagem] = useState("");
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const currentUserId = authUser?.id || (typeof window !== "undefined" ? window.localStorage.getItem("userId") : null);
+    const [caracteristicasSelecionadas, setCaracteristicasSelecionadas] = useState([]);
     const [novoPerfilCaracteristicas, setNovoPerfilCaracteristicas] = useState([]);
     const [perfilFotoFile, setPerfilFotoFile] = useState(null);
     const [novoPerfilFotoFile, setNovoPerfilFotoFile] = useState(null);
@@ -163,6 +229,8 @@ function Conta() {
         const perfilMapeado = mapPerfilFromResponse(response);
         setPerfil(perfilMapeado);
         setPerfilOriginal(perfilMapeado);
+        setCaracteristicasSelecionadas(perfilMapeado.caracteristicasIds || []);
+        setCaracteristicasOriginais(perfilMapeado.caracteristicasIds || []);
         setPerfilCarregado(true);
         return perfilMapeado;
     }, []);
@@ -229,20 +297,31 @@ function Conta() {
         setAuthError("");
     }, [modoRegisto]);
 
-    const opcoesPredefinidas = [
-        "Criativo", "Disciplinado", "Comunicativo", "Empático",
-        "Perfeccionista", "Colaborativo", "Inovador", "Pontual",
-        "Motivado", "Resiliente", "Amigável", "Líder nato",
-    ];
+    useEffect(() => {
+        UsersAPI.listCaracteristicas()
+            .then((lista) => {
+                if (Array.isArray(lista)) {
+                    const normalizados = lista.map((c) => ({ id: Number(c.id), nome: c.nome }));
+                    setCaracteristicasDisponiveis(normalizados);
+                }
+            })
+            .catch(() => {});
+    }, []);
+
+    const opcoesPredefinidas = caracteristicasDisponiveis;
 
     const validarEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
-    const handleAddTrait = (trait) => {
-        if (!caracteristicas.includes(trait)) setCaracteristicas([...caracteristicas, trait]);
-        setMostrarOpcoes(false);
+    const getCaracteristicaNome = (id) =>
+        caracteristicasDisponiveis.find((c) => c.id === Number(id))?.nome || "Característica";
+
+    const handleAddTrait = (id) => {
+        if (!caracteristicasSelecionadas.includes(id)) {
+            setCaracteristicasSelecionadas([...caracteristicasSelecionadas, id]);
+        }
     };
 
-    const handleRemoveTrait = (trait) => setCaracteristicas(caracteristicas.filter((t) => t !== trait));
+    const handleRemoveTrait = (id) => setCaracteristicasSelecionadas(caracteristicasSelecionadas.filter((t) => t !== id));
 
     const handleEditChange = (campo, valor) => setPerfil({ ...perfil, [campo]: valor });
 
@@ -254,10 +333,28 @@ function Conta() {
         });
     };
 
-    const toggleNovoPerfilTrait = (trait) => {
+    const handleInicioExperienciaChange = (valor) => {
+        const anosCalc = anosDesdeInicio(valor);
+        setPerfil({
+            ...perfil,
+            inicioExperiencia: valor,
+            anosExperiencia: anosCalc === null ? "" : String(anosCalc),
+        });
+    };
+
+    const toggleNovoPerfilTrait = (traitId) => {
         setNovoPerfilCaracteristicas((prev) =>
-            prev.includes(trait) ? prev.filter((item) => item !== trait) : [...prev, trait]
+            prev.includes(traitId) ? prev.filter((item) => item !== traitId) : [...prev, traitId]
         );
+    };
+
+    const handleNovoInicioExperiencia = (valor) => {
+        const anosCalc = anosDesdeInicio(valor);
+        setNovoPerfil({
+            ...novoPerfil,
+            inicioExperiencia: valor,
+            anosExperiencia: anosCalc === null ? "" : String(anosCalc),
+        });
     };
 
     const resetRegisterForm = () => {
@@ -283,8 +380,13 @@ function Conta() {
             setPerfilFotoFile(null);
         }
 
+        const anosFromInicio = anosDesdeInicio(perfil.inicioExperiencia);
         const anosExperienciaValue =
-            perfil.anosExperiencia === "" ? null : Number(perfil.anosExperiencia);
+            anosFromInicio !== null
+                ? anosFromInicio
+                : perfil.anosExperiencia === ""
+                    ? null
+                    : Number(perfil.anosExperiencia);
         const safeAnosExperiencia =
             Number.isFinite(anosExperienciaValue) && anosExperienciaValue >= 0
                 ? anosExperienciaValue
@@ -294,6 +396,7 @@ function Conta() {
             nome: perfil.nome.trim(),
             email: perfil.email.trim(),
             tipo: perfil.tipo || "solo",
+            sexo: perfil.sexo,
             localizacao: perfil.localizacao.trim() || null,
             descricao: perfil.descricao,
             foto_url: fotoUrlPayload,
@@ -305,6 +408,7 @@ function Conta() {
         };
 
         await UsersAPI.updateProfile(currentUserId, payload);
+        await UsersAPI.updateUserCaracteristicas(currentUserId, caracteristicasSelecionadas);
 
         if (password) {
             await UsersAPI.updatePassword(currentUserId, password);
@@ -313,7 +417,7 @@ function Conta() {
         }
 
         setPerfilOriginal({ ...perfil });
-        setCaracteristicasOriginais([...caracteristicas]);
+        setCaracteristicasOriginais([...caracteristicasSelecionadas]);
     };
 
     const handleToggleEdicao = async () => {
@@ -348,7 +452,7 @@ function Conta() {
 
     const handleCancelar = () => {
         setPerfil({ ...perfilOriginal });
-        setCaracteristicas([...caracteristicasOriginais]);
+        setCaracteristicasSelecionadas([...caracteristicasOriginais]);
         setModoEdicao(false);
         setPassword("");
         setConfirmPassword("");
@@ -364,8 +468,8 @@ function Conta() {
         }
         setPerfil({ ...INITIAL_PERFIL_STATE });
         setPerfilOriginal({ ...INITIAL_PERFIL_STATE });
-        setCaracteristicas([...DEFAULT_TRAITS]);
-        setCaracteristicasOriginais([...DEFAULT_TRAITS]);
+        setCaracteristicasSelecionadas([]);
+        setCaracteristicasOriginais([]);
         setPerfilCarregado(false);
         setModoEdicao(false);
         setPassword("");
@@ -375,7 +479,7 @@ function Conta() {
         setPerfilFotoFile(null);
         setNovoPerfilFotoFile(null);
     };
-    
+
     const handleLogin = async () => {
         const email = loginData.email.trim();
         const passwordValue = loginData.password.trim();
@@ -429,8 +533,13 @@ function Conta() {
                     ? novoPerfil.foto
                     : PLACEHOLDER_PHOTO;
 
+            const anosExperienciaValueFromInicio = anosDesdeInicio(novoPerfil.inicioExperiencia);
             const anosExperienciaValue =
-                novoPerfil.anosExperiencia === "" ? null : Number(novoPerfil.anosExperiencia);
+                anosExperienciaValueFromInicio !== null
+                    ? anosExperienciaValueFromInicio
+                    : novoPerfil.anosExperiencia === ""
+                        ? null
+                        : Number(novoPerfil.anosExperiencia);
             const safeAnosExperiencia =
                 Number.isFinite(anosExperienciaValue) && anosExperienciaValue >= 0
                     ? anosExperienciaValue
@@ -441,6 +550,7 @@ function Conta() {
                 email: novoPerfil.email,
                 password: novoPerfil.password,
                 tipo: "solo",
+                sexo: novoPerfil.sexo,
                 localizacao: novoPerfil.localizacao.trim() || null,
                 descricao: novoPerfil.descricao,
                 foto_url: fotoUrlPayload,
@@ -456,8 +566,9 @@ function Conta() {
                 setNovoPerfilFotoFile(null);
                 await fetchPerfil(loggedUser.id);
             }
-            if (novoPerfilCaracteristicas.length) {
-                setCaracteristicas([...novoPerfilCaracteristicas]);
+            if (novoPerfilCaracteristicas.length && loggedUser?.id) {
+                await UsersAPI.updateUserCaracteristicas(loggedUser.id, novoPerfilCaracteristicas);
+                setCaracteristicasSelecionadas([...novoPerfilCaracteristicas]);
                 setCaracteristicasOriginais([...novoPerfilCaracteristicas]);
             }
             setNovoPerfilCaracteristicas([]);
@@ -579,44 +690,55 @@ function Conta() {
                         <input
                             className={styles.loginInput}
                             placeholder="Data de nascimento"
-                            type="date"
+                            type={novoPerfil.dataNascimento ? "date" : "text"}
                             value={novoPerfil.dataNascimento}
                             onChange={(e) => {
                                 setNovoPerfil({ ...novoPerfil, dataNascimento: e.target.value });
                                 setAuthError("");
                             }}
+                            onFocus={(e) => { e.target.type = "date"; }}
+                            onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
                         />
 
                         <select
-                            className={styles.loginInput}
+                            className={`${styles.loginInput} ${!novoPerfil.sexo ? styles.loginInputPlaceholder : ""}`}
                             value={novoPerfil.sexo}
                             onChange={(e) => {
                                 setNovoPerfil({ ...novoPerfil, sexo: e.target.value });
                                 setAuthError("");
                             }}
                         >
+                            <option value="" disabled>Sexo</option>
                             <option value="Masculino">Masculino</option>
                             <option value="Feminino">Feminino</option>
+                            <option value="Outro">Outro</option>
                         </select>
 
-                        <input
-                            className={styles.loginInput}
-                            placeholder="Instrumento"
+                        <select
+                            className={`${styles.loginInput} ${!novoPerfil.instrumento ? styles.loginInputPlaceholder : ""}`}
                             value={novoPerfil.instrumento}
                             onChange={(e) => {
                                 setNovoPerfil({ ...novoPerfil, instrumento: e.target.value });
                                 setAuthError("");
                             }}
-                        />
+                        >
+                            <option value="" disabled>Instrumento</option>
+                            {INSTRUMENTS.map((instrumento) => (
+                                <option key={instrumento} value={instrumento}>{instrumento}</option>
+                            ))}
+                        </select>
+
                         <input
                             className={styles.loginInput}
-                            placeholder="Anos de Experiência"
-                            type="number"
-                            value={novoPerfil.anosExperiencia}
+                            placeholder="Experiência"
+                            type={novoPerfil.inicioExperiencia ? "date" : "text"}
+                            value={novoPerfil.inicioExperiencia}
                             onChange={(e) => {
-                                setNovoPerfil({ ...novoPerfil, anosExperiencia: e.target.value });
+                                handleNovoInicioExperiencia(e.target.value);
                                 setAuthError("");
                             }}
+                            onFocus={(e) => { e.target.type = "date"; }}
+                            onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
                         />
                         <textarea
                             className={styles.loginInput}
@@ -627,15 +749,19 @@ function Conta() {
                                 setAuthError("");
                             }}
                         />
-                        <input
-                            className={styles.loginInput}
-                            placeholder="Localização"
+                        <select
+                            className={`${styles.loginInput} ${!novoPerfil.localizacao ? styles.loginInputPlaceholder : ""}`}
                             value={novoPerfil.localizacao}
                             onChange={(e) => {
                                 setNovoPerfil({ ...novoPerfil, localizacao: e.target.value });
                                 setAuthError("");
                             }}
-                        />
+                        >
+                            <option value="" disabled>Localização</option>
+                            {DISTRICTS.map((distrito) => (
+                                <option key={distrito} value={distrito}>{distrito}</option>
+                            ))}
+                        </select>
 
                         <div className={styles.registerTraits}>
                             <p>Características (opcional)</p>
@@ -643,18 +769,17 @@ function Conta() {
                                 {opcoesPredefinidas.map((trait) => (
                                     <button
                                         type="button"
-                                        key={trait}
-                                        className={`${styles.traitChip} ${
-                                            novoPerfilCaracteristicas.includes(trait)
-                                                ? styles.traitChipActive
-                                                : ""
-                                        }`}
+                                        key={trait.id}
+                                        className={`${styles.traitChip} ${novoPerfilCaracteristicas.includes(trait.id)
+                                            ? styles.traitChipActive
+                                            : ""
+                                            }`}
                                         onClick={() => {
-                                            toggleNovoPerfilTrait(trait);
+                                            toggleNovoPerfilTrait(trait.id);
                                             setAuthError("");
                                         }}
                                     >
-                                        {trait}
+                                        {trait.nome}
                                     </button>
                                 ))}
                             </div>
@@ -789,13 +914,43 @@ function Conta() {
                                 <input className={styles.inputText} value={perfil.email} type="email" onChange={(e) => handleEditChange("email", e.target.value)} placeholder="Email" />
                                 <input
                                     className={styles.inputText}
+                                    placeholder="Data de Nascimento"
                                     value={perfil.dataNascimento || ""}
-                                    type="date"
+                                    type={perfil.dataNascimento ? "date" : "text"}
                                     onChange={(e) => handleDataNascimentoChange(e.target.value)}
+                                    onFocus={(e) => { e.target.type = "date"; }}
+                                    onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
                                 />
-                                <input className={styles.inputText} value={perfil.localizacao} placeholder="Localização" onChange={(e) => handleEditChange("localizacao", e.target.value)} />
+                                <select
+                                    className={`${styles.inputText} ${!perfil.sexo ? styles.loginInputPlaceholder : ""}`}
+                                    value={perfil.sexo}
+                                    onChange={(e) => handleEditChange("sexo", e.target.value)}
+                                >
+                                    <option value="" disabled>Sexo</option>
+                                    <option value="Masculino">Masculino</option>
+                                    <option value="Feminino">Feminino</option>
+                                    <option value="Outro">Outro</option>
+                                </select>
+                                <select
+                                    className={`${styles.inputText} ${!perfil.localizacao ? styles.loginInputPlaceholder : ""}`}
+                                    value={perfil.localizacao}
+                                    onChange={(e) => handleEditChange("localizacao", e.target.value)}
+                                >
+                                    <option value="" disabled>Localização</option>
+                                    {DISTRICTS.map((distrito) => (
+                                        <option key={distrito} value={distrito}>{distrito}</option>
+                                    ))}
+                                </select>
                                 <input className={styles.inputText} value={perfil.instrumento} onChange={(e) => handleEditChange("instrumento", e.target.value)} />
-                                <input className={styles.inputText} value={perfil.anosExperiencia} type="number" onChange={(e) => handleEditChange("anosExperiencia", e.target.value)} />
+                                <input
+                                    className={styles.inputText}
+                                    placeholder="Experiência"
+                                    value={perfil.inicioExperiencia}
+                                    type={perfil.inicioExperiencia ? "date" : "text"}
+                                    onChange={(e) => handleInicioExperienciaChange(e.target.value)}
+                                    onFocus={(e) => { e.target.type = "date"; }}
+                                    onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
+                                />
 
                                 <div className={styles.passwordGroup}>
                                     <input
@@ -867,10 +1022,16 @@ function Conta() {
 
                 <section className={styles.traitsSection}>
                     <div className={styles.traitsGrid}>
-                        {caracteristicas.map((t, i) => (
-                            <div key={i} className={styles.traitCard}>
-                                <span>{t}</span>
-                                {modoEdicao && <button className={styles.removeButton} onClick={() => handleRemoveTrait(t)}>✕</button>}
+                        {caracteristicasSelecionadas.length === 0 && !modoEdicao && (
+                            <p className={styles.basicInfo} style={{ textAlign: "center", width: "100%" }}>
+                                Ainda não tens características atribuídas
+                            </p>
+                        )}
+
+                        {caracteristicasSelecionadas.map((id) => (
+                            <div key={id} className={styles.traitCard}>
+                                <span>{getCaracteristicaNome(id)}</span>
+                                {modoEdicao && <button className={styles.removeButton} onClick={() => handleRemoveTrait(id)}>✕</button>}
                             </div>
                         ))}
 
@@ -881,11 +1042,23 @@ function Conta() {
                         )}
                     </div>
 
-                    {mostrarOpcoes && (
+                    {modoEdicao && mostrarOpcoes && (
                         <div className={styles.traitOptions}>
-                            {opcoesPredefinidas.map((o, i) => (
-                                <button key={i} className={styles.optionButton} onClick={() => handleAddTrait(o)}>{o}</button>
-                            ))}
+                            {opcoesPredefinidas.length === 0 ? (
+                                <p className={styles.basicInfo}>Sem características disponíveis</p>
+                            ) : (
+                                opcoesPredefinidas
+                                    .filter((o) => !caracteristicasSelecionadas.includes(o.id))
+                                    .map((o) => (
+                                        <button
+                                            key={o.id}
+                                            className={styles.optionButton}
+                                            onClick={() => handleAddTrait(o.id)}
+                                        >
+                                            {o.nome}
+                                        </button>
+                                    ))
+                            )}
                         </div>
                     )}
                 </section>

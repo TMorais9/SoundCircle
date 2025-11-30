@@ -42,7 +42,7 @@
     align-items: center;
     position: relative;
     overflow: hidden;
-    padding-bottom: 55px;
+    padding-bottom: 40px;
     transition: all 0.25s ease;
 }
 
@@ -100,8 +100,9 @@
 
 .cardInfo .infoDetails {
     display: flex;
-    justify-content: center;
-    gap: 10px;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
 }
 
 .cardInfo .job,

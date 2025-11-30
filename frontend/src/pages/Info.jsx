@@ -88,10 +88,13 @@ const mapProfile = (payload) => {
         };
     });
 
+    const carNames = (payload.caracteristicas || []).map((c) => c.nome);
+
     return {
         id: user.id,
         nome: user.nome,
         idade: calcularIdade(user.data_nascimento),
+        localizacao: user.localizacao || "",
         instrumento:
             instrumentosDetalhes[0]?.nome ||
             user.instrumento ||
@@ -99,9 +102,11 @@ const mapProfile = (payload) => {
         anosExperiencia: instrumentosDetalhes[0]?.anosExperiencia ?? null,
         descricao: user.descricao,
         foto: resolvePhotoUrl(user.foto_url),
-        caracteristicas: instrumentosDetalhes.length
-            ? instrumentosDetalhes.map((i) => i.rotulo)
-            : [],
+        caracteristicas: carNames.length
+            ? carNames
+            : instrumentosDetalhes.length
+                ? instrumentosDetalhes.map((i) => i.rotulo)
+                : [],
         tipo: user.tipo,
         instrumentosDetalhes,
     };
@@ -161,7 +166,7 @@ function Info() {
 
     const traits = profile?.caracteristicas?.length
         ? profile.caracteristicas
-        : ["Colaborativo", "Criativo", "Apaixonado"];
+        : [];
 
     return (
         <>
@@ -190,8 +195,12 @@ function Info() {
                                 />
                                 <h1 className={styles.name}>{profile?.nome}</h1>
                                 <p className={styles.basicInfo}>
-                                    {profile?.idade ? `${profile.idade} anos` : "Idade não definida"} ·{" "}
                                     {profile?.instrumento}
+                                </p>
+                                <p className={styles.basicInfo}>
+                                    {profile?.idade ? `${profile.idade} anos` : "Idade não definida"}
+                                    {profile?.sexo ? ` · ${profile.sexo}` : ""}
+                                    {profile?.localizacao ? ` · ${profile.localizacao}` : ""}
                                 </p>
                                 {profile?.anosExperiencia !== null &&
                                     profile?.anosExperiencia !== undefined &&
@@ -233,6 +242,11 @@ function Info() {
 
                         <section className={styles.traitsSection}>
                             <div className={styles.traitsGrid}>
+                                {traits.length === 0 && (
+                                    <p className={styles.basicInfo} style={{ textAlign: "center", width: "100%" }}>
+                                        Ainda não tens características atribuídas
+                                    </p>
+                                )}
                                 {traits.map((trait, index) => (
                                     <div key={index} className={styles.traitCard}>
                                         <span>{trait}</span>

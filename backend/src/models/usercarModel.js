@@ -44,6 +44,22 @@ const UserCar = {
       callback
     );
   },
+
+  deleteByUser: (user_id, callback) => {
+    db.query('DELETE FROM UserCar WHERE user_id = ?', [user_id], callback);
+  },
+
+  bulkInsert: (user_id, caracteristicaIds, callback) => {
+    if (!Array.isArray(caracteristicaIds) || !caracteristicaIds.length) {
+      return callback(null, { affectedRows: 0 });
+    }
+    const values = caracteristicaIds.map((id) => [user_id, id]);
+    db.query(
+      'INSERT IGNORE INTO UserCar (user_id, caracteristica_id) VALUES ?',
+      [values],
+      callback
+    );
+  },
 };
 
 module.exports = UserCar;

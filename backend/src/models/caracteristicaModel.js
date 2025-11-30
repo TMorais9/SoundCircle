@@ -3,14 +3,14 @@ const db = require('../config/db');
 const Caracteristica = {
   getAll: (callback) => {
     db.query(
-      'SELECT id, nome, descricao FROM Caracteristica ORDER BY nome ASC',
+      'SELECT id, nome FROM Caracteristica ORDER BY nome ASC',
       callback
     );
   },
 
   getById: (id, callback) => {
     db.query(
-      'SELECT id, nome, descricao FROM Caracteristica WHERE id = ?',
+      'SELECT id, nome FROM Caracteristica WHERE id = ?',
       [id],
       callback
     );
@@ -18,16 +18,16 @@ const Caracteristica = {
 
   create: (data, callback) => {
     db.query(
-      'INSERT INTO Caracteristica (nome, descricao) VALUES (?, ?)',
-      [data.nome, data.descricao || null],
+      'INSERT INTO Caracteristica (nome) VALUES (?)',
+      [data.nome],
       callback
     );
   },
 
   update: (id, data, callback) => {
     db.query(
-      'UPDATE Caracteristica SET nome = ?, descricao = ? WHERE id = ?',
-      [data.nome, data.descricao || null, id],
+      'UPDATE Caracteristica SET nome = ? WHERE id = ?',
+      [data.nome, id],
       callback
     );
   },

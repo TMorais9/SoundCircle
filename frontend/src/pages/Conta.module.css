@@ -408,7 +408,6 @@
     box-shadow: 0 6px 18px rgba(255, 88, 35, 0.25);
 }
 
-/* --- Área do botão Sign Out --- */
 .signOutArea {
     width: 100%;
     display: flex;
@@ -520,6 +519,10 @@
     font-family: "Poppins", sans-serif;
     background: white;
     transition: all 0.3s;
+}
+
+.loginInputPlaceholder {
+    color: rgba(49, 49, 49, 0.696);
 }
 
 .loginInput:focus {

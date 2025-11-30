@@ -110,24 +110,29 @@ exports.getById = (req, res) => {
   });
 };
 
-exports.getProfile = (req, res) => {
+exports.getProfile = async (req, res) => {
   const { id } = req.params;
 
-  User.getById(id, (err, userRows) => {
-    if (err) return res.status(500).json({ error: err.message });
+  try {
+    const userRows = await runQuery(User.getById, id);
     if (!userRows.length) return res.status(404).json({ message: 'User não encontrado' });
 
-    const user = userRows[0];
+    const instrumentos = await runQuery(User.getInstrumentsByUser, id);
+    let caracteristicas = [];
+    try {
+      caracteristicas = await runQuery(User.getCharacteristicsByUser, id);
+    } catch (carErr) {
+      console.error('Erro ao obter características do user:', carErr.message);
+    }
 
-    User.getInstrumentsByUser(id, (err2, instRows) => {
-      if (err2) return res.status(500).json({ error: err2.message });
-
-      res.json({
-        user,
-        instrumentos: instRows, 
-      });
+    res.json({
+      user: userRows[0],
+      instrumentos,
+      caracteristicas,
     });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 exports.create = async (req, res) => {
@@ -137,6 +142,7 @@ exports.create = async (req, res) => {
       email,
       password,
       tipo,
+      sexo,
       descricao,
       foto_url,
       data_nascimento,
@@ -155,12 +161,13 @@ exports.create = async (req, res) => {
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
 
     User.create(
-      { nome, email, password_hash, tipo, descricao, foto_url, data_nascimento, localizacao },
+      { nome, email, password_hash, tipo, sexo, descricao, foto_url, data_nascimento, localizacao },
       async (err, result) => {
         if (err) {
           if (err.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({ message: 'Já existe um user com esse email' });
           }
+          console.error('Erro a criar utilizador:', err);
           return res.status(500).json({ error: err.message });
         }
         try {
@@ -182,6 +189,7 @@ exports.update = (req, res) => {
     nome,
     email,
     tipo,
+    sexo,
     descricao,
     foto_url,
     data_nascimento,
@@ -199,7 +207,7 @@ exports.update = (req, res) => {
 
   User.update(
     id,
-    { nome, email, tipo, descricao, foto_url, data_nascimento, localizacao },
+    { nome, email, tipo, sexo, descricao, foto_url, data_nascimento, localizacao },
     async (err, result) => {
       if (err) {
         if (err.code === 'ER_DUP_ENTRY') {
@@ -269,6 +277,7 @@ exports.login = (req, res) => {
       });
     } catch (e) {
       res.status(500).json({ error: e.message });
+      console.error('Payload recebido no registo:', req.body);
     }
   });
 };

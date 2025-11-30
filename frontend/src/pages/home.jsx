@@ -173,8 +173,10 @@ function Home() {
         }
         return filteredUsers.map((user) => {
             const idade = calcularIdade(user.data_nascimento);
-            const roleLabel =
-                user.instrumento || (user.tipo === "banda" ? "Banda" : "Artista Solo");
+            const instrumentoLabel = user.instrumento_nome || user.instrumento || "";
+
+            const localizacao = user.localizacao || "";
+            const linha1 = [instrumentoLabel || "Instrumento não definido", idade ? `${idade} anos` : null, localizacao].filter(Boolean).join(" · ");
             return (
                 <div className={styles.card} key={user.id}>
                     <div className={styles.cardBorderTop}></div>
@@ -184,10 +186,7 @@ function Home() {
                     <div className={styles.cardInfo}>
                         <span className={styles.name}>{user.nome}</span>
                         <div className={styles.infoDetails}>
-                            <span className={styles.job}>
-                                {roleLabel}
-                                {idade ? ` · ${idade} anos` : ""}
-                            </span>
+                            {linha1 && <span className={styles.job}>{linha1}</span>}
                         </div>
                     </div>
                     <button onClick={() => handleViewProfile(user.id)}>Ver Perfil</button>

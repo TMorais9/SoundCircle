@@ -10,6 +10,8 @@ router.get('/:user_id/:caracteristica_id', controller.getByIds);
 
 router.post('/', controller.create);
 
+router.put('/user/:user_id', controller.replaceForUser);
+
 router.put('/:user_id/:caracteristica_id', controller.update);
 
 router.delete('/:user_id/:caracteristica_id', controller.delete);

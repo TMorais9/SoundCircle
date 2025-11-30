@@ -67,3 +67,25 @@ exports.delete = (req, res) => {
     res.json({ message: 'Registo eliminado com sucesso' });
   });
 };
+
+exports.replaceForUser = (req, res) => {
+  const { user_id } = req.params;
+  const { ids } = req.body;
+
+  if (!user_id) return res.status(400).json({ message: 'user_id é obrigatório' });
+
+  const caracteristicaIds = Array.isArray(ids) ? ids.filter((n) => Number(n)) : [];
+
+  UserCar.deleteByUser(user_id, (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    if (!caracteristicaIds.length) {
+      return res.json({ message: 'Características atualizadas com sucesso' });
+    }
+
+    UserCar.bulkInsert(user_id, caracteristicaIds, (insertErr) => {
+      if (insertErr) return res.status(500).json({ error: insertErr.message });
+      res.json({ message: 'Características atualizadas com sucesso' });
+    });
+  });
+};

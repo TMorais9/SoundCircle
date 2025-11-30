@@ -43,6 +43,9 @@ const UsersAPI = {
         formData.append("photo", file);
         return request(`/users/${id}/photo`, { method: "POST", body: formData });
     },
+    listCaracteristicas: () => request("/caracteristicas"),
+    updateUserCaracteristicas: (userId, ids) =>
+        request(`/usercar/user/${userId}`, { method: "PUT", body: { ids } }),
 };
 
 export default UsersAPI;
