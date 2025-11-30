@@ -140,6 +140,7 @@ exports.create = async (req, res) => {
       descricao,
       foto_url,
       data_nascimento,
+      localizacao,
       instrumento,
       instrumentoNivel,
       anosExperiencia,
@@ -154,7 +155,7 @@ exports.create = async (req, res) => {
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
 
     User.create(
-      { nome, email, password_hash, tipo, descricao, foto_url, data_nascimento },
+      { nome, email, password_hash, tipo, descricao, foto_url, data_nascimento, localizacao },
       async (err, result) => {
         if (err) {
           if (err.code === 'ER_DUP_ENTRY') {
@@ -184,6 +185,7 @@ exports.update = (req, res) => {
     descricao,
     foto_url,
     data_nascimento,
+    localizacao,
     instrumento,
     instrumentoNivel,
     anosExperiencia,
@@ -197,7 +199,7 @@ exports.update = (req, res) => {
 
   User.update(
     id,
-    { nome, email, tipo, descricao, foto_url, data_nascimento },
+    { nome, email, tipo, descricao, foto_url, data_nascimento, localizacao },
     async (err, result) => {
       if (err) {
         if (err.code === 'ER_DUP_ENTRY') {

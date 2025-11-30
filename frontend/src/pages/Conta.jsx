@@ -19,6 +19,7 @@ const INITIAL_PERFIL_STATE = {
     email: "",
     idade: "",
     dataNascimento: "",
+    localizacao: "",
     tipo: "solo",
     instrumento: "",
     anosExperiencia: "",
@@ -30,6 +31,7 @@ const INITIAL_REGISTER_STATE = {
     nome: "",
     email: "",
     dataNascimento: "",
+    localizacao: "",
     sexo: "Masculino",
     instrumento: "",
     anosExperiencia: "",
@@ -93,6 +95,7 @@ const mapPerfilFromResponse = (payload) => {
         email: user?.email ?? "",
         idade: user?.data_nascimento ? calcularIdade(user.data_nascimento) : "",
         dataNascimento: toDateInputValue(user?.data_nascimento),
+        localizacao: user?.localizacao || "",
         tipo: user?.tipo || "solo",
         instrumento: instrumento?.instrumento_nome || "",
         anosExperiencia:
@@ -291,6 +294,7 @@ function Conta() {
             nome: perfil.nome.trim(),
             email: perfil.email.trim(),
             tipo: perfil.tipo || "solo",
+            localizacao: perfil.localizacao.trim() || null,
             descricao: perfil.descricao,
             foto_url: fotoUrlPayload,
             data_nascimento: perfil.dataNascimento || null,
@@ -437,6 +441,7 @@ function Conta() {
                 email: novoPerfil.email,
                 password: novoPerfil.password,
                 tipo: "solo",
+                localizacao: novoPerfil.localizacao.trim() || null,
                 descricao: novoPerfil.descricao,
                 foto_url: fotoUrlPayload,
                 data_nascimento: novoPerfil.dataNascimento || null,
@@ -622,6 +627,15 @@ function Conta() {
                                 setAuthError("");
                             }}
                         />
+                        <input
+                            className={styles.loginInput}
+                            placeholder="Localização"
+                            value={novoPerfil.localizacao}
+                            onChange={(e) => {
+                                setNovoPerfil({ ...novoPerfil, localizacao: e.target.value });
+                                setAuthError("");
+                            }}
+                        />
 
                         <div className={styles.registerTraits}>
                             <p>Características (opcional)</p>
@@ -779,6 +793,7 @@ function Conta() {
                                     type="date"
                                     onChange={(e) => handleDataNascimentoChange(e.target.value)}
                                 />
+                                <input className={styles.inputText} value={perfil.localizacao} placeholder="Localização" onChange={(e) => handleEditChange("localizacao", e.target.value)} />
                                 <input className={styles.inputText} value={perfil.instrumento} onChange={(e) => handleEditChange("instrumento", e.target.value)} />
                                 <input className={styles.inputText} value={perfil.anosExperiencia} type="number" onChange={(e) => handleEditChange("anosExperiencia", e.target.value)} />
 
@@ -807,6 +822,7 @@ function Conta() {
                             <>
                                 <h1 className={styles.name}>{perfil.nome}</h1>
                                 <p className={styles.basicInfo}>{perfil.idade} anos · {perfil.instrumento}</p>
+                                {perfil.localizacao && <p className={styles.basicInfo}>{perfil.localizacao}</p>}
                                 {perfil.anosExperiencia !== "" && perfil.anosExperiencia !== null && (
                                     <p className={styles.experience}>
                                         A tocar há {perfil.anosExperiencia} ano(s)

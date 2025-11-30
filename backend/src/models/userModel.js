@@ -3,14 +3,14 @@ const db = require('../config/db');
 const User = {
   getAll: (callback) => {
     db.query(
-      'SELECT id, nome, email, tipo, descricao, foto_url, data_nascimento FROM User',
+      'SELECT id, nome, email, tipo, descricao, foto_url, data_nascimento, localizacao FROM User',
       callback
     );
   },
 
   getById: (id, callback) => {
     db.query(
-      'SELECT id, nome, email, tipo, descricao, foto_url, data_nascimento FROM User WHERE id = ?',
+      'SELECT id, nome, email, tipo, descricao, foto_url, data_nascimento, localizacao FROM User WHERE id = ?',
       [id],
       callback
     );
@@ -22,8 +22,8 @@ const User = {
 
   create: (data, callback) => {
     db.query(
-      `INSERT INTO User (nome, email, password_hash, tipo, descricao, foto_url, data_nascimento, is_verified, verification_token, verification_expires)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO User (nome, email, password_hash, tipo, descricao, foto_url, data_nascimento, localizacao, is_verified, verification_token, verification_expires)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         data.nome,
         data.email,
@@ -32,6 +32,7 @@ const User = {
         data.descricao || null,
         data.foto_url || null,
         data.data_nascimento || null,
+        data.localizacao || null,
         data.is_verified || 0,
         data.verification_token || null,
         data.verification_expires || null,
@@ -43,7 +44,7 @@ const User = {
   update: (id, data, callback) => {
     db.query(
       `UPDATE User
-       SET nome = ?, email = ?, tipo = ?, descricao = ?, foto_url = ?, data_nascimento = ?
+       SET nome = ?, email = ?, tipo = ?, descricao = ?, foto_url = ?, data_nascimento = ?, localizacao = ?
        WHERE id = ?`,
       [
         data.nome,
@@ -52,6 +53,7 @@ const User = {
         data.descricao || null,
         data.foto_url || null,
         data.data_nascimento || null,
+        data.localizacao || null,
         id,
       ],
       callback
