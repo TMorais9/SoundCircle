@@ -10,11 +10,11 @@ const app = express();
 
 const userRoutes = require('./routes/userRoutes');
 const instrumentoRoutes = require('./routes/instrumentoRoutes');
-const userInstRoutes = require('./routes/userinstroutes');
+const userinstRoutes = require('./routes/userinstroutes');
 const mensagemRoutes = require('./routes/mensagemRoutes');
 const caracteristicaRoutes = require('./routes/caracteristicaRoutes');
-const userCarRoutes = require('./routes/usercarRoutes');
-const userPhotoRoutes = require('./routes/userphotoRoutes');
+const usercarRoutes = require('./routes/usercarRoutes');
+const userphotoRoutes = require('./routes/userphotoRoutes');
 
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
