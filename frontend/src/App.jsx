@@ -7,6 +7,7 @@ import Info from "./pages/info";
 import Messages from "./pages/messages";
 import Ai from "./pages/ai";
 import Conta from "./pages/conta";
+import Search from "./pages/search";
 
 const store = createAuthStore("cookie", {
     authName: "_auth",
@@ -22,6 +23,7 @@ const App = () => (
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/info/:id?" element={<Info />} />
+                <Route path="/search" element={<Search />} />
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/ai" element={<Ai />} />
                 <Route path="/conta" element={<Conta />} />

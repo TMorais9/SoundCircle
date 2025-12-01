@@ -6,7 +6,7 @@ function Menu() {
 
     return (
         <div className={styles.buttonContainer}>
-            <button className={styles.button}>
+            <button className={styles.button} onClick={() => navigate("/search")}>
                 <span className="material-symbols-outlined">search</span>
             </button>
 
