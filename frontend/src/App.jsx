@@ -3,6 +3,7 @@ import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import AuthProvider from "react-auth-kit";
 import useIsAuthenticated from "react-auth-kit/hooks/useIsAuthenticated";
 import createAuthStore from "react-auth-kit/store/createAuthStore";
+import Sidebar from "./components/Sidebar";
 import Home from "./pages/home";
 import Info from "./pages/info";
 import Messages from "./pages/messages";
@@ -31,43 +32,48 @@ const RequireAuth = ({ children }) => {
 const App = () => (
     <AuthProvider store={store}>
         <HashRouter>
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/conta" element={<Conta />} />
-                <Route
-                    path="/info/:id?"
-                    element={
-                        <RequireAuth>
-                            <Info />
-                        </RequireAuth>
-                    }
-                />
-                <Route
-                    path="/search"
-                    element={
-                        <RequireAuth>
-                            <Search />
-                        </RequireAuth>
-                    }
-                />
-                <Route
-                    path="/messages"
-                    element={
-                        <RequireAuth>
-                            <Messages />
-                        </RequireAuth>
-                    }
-                />
-                <Route
-                    path="/ai"
-                    element={
-                        <RequireAuth>
-                            <Ai />
-                        </RequireAuth>
-                    }
-                />
-                <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
+            <div className="appShell">
+                <Sidebar />
+                <div className="contentArea">
+                    <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/conta" element={<Conta />} />
+                        <Route
+                            path="/info/:id?"
+                            element={
+                                <RequireAuth>
+                                    <Info />
+                                </RequireAuth>
+                            }
+                        />
+                        <Route
+                            path="/search"
+                            element={
+                                <RequireAuth>
+                                    <Search />
+                                </RequireAuth>
+                            }
+                        />
+                        <Route
+                            path="/messages"
+                            element={
+                                <RequireAuth>
+                                    <Messages />
+                                </RequireAuth>
+                            }
+                        />
+                        <Route
+                            path="/ai"
+                            element={
+                                <RequireAuth>
+                                    <Ai />
+                                </RequireAuth>
+                            }
+                        />
+                        <Route path="*" element={<Navigate to="/" />} />
+                    </Routes>
+                </div>
+            </div>
         </HashRouter>
     </AuthProvider>
 );

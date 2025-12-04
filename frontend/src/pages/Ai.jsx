@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthUser from "react-auth-kit/hooks/useAuthUser";
-import Header from "../components/Header";
-import Menu from "../components/Menu";
 import styles from "./ai.module.css";
 import UsersAPI from "../services/usersAPI";
 
@@ -235,7 +233,6 @@ function Ai() {
 
     return (
         <>
-            <Header />
             <main className={styles.aiPage}>
                 <button
                     className={styles.backButton}
@@ -293,8 +290,6 @@ function Ai() {
                     </form>
                 </div>
             </main>
-
-            <Menu />
         </>
     );
 }

@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthUser from "react-auth-kit/hooks/useAuthUser";
-import Header from "../components/Header";
-import Menu from "../components/Menu";
 import styles from "./home.module.css";
 import UsersAPI, { API_BASE_URL } from "../services/usersAPI";
 
@@ -149,8 +147,6 @@ function Search() {
 
     return (
         <>
-            <Header />
-
             <div className={styles.searchOverlay}>
                 <div className={styles.searchModal}>
                     <div className={styles.searchModalHeader}>
@@ -193,8 +189,6 @@ function Search() {
                     </div>
                 </div>
             </div>
-
-            <Menu />
         </>
     );
 }

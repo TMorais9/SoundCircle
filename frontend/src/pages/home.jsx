@@ -1,8 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import useAuthUser from "react-auth-kit/hooks/useAuthUser";
-import Header from "../components/Header";
-import Menu from "../components/Menu";
 import styles from "./home.module.css";
 import UsersAPI, { API_BASE_URL } from "../services/usersAPI";
 
@@ -197,12 +195,9 @@ function Home() {
 
     return (
         <>
-            <Header />
             <section className={`${styles.cardSection} ${fadeOut ? styles.fadeOut : ""}`}>
                 {renderUserCards()}
             </section>
-
-            <Menu />
 
             {mostrarModal && (
                 <div className={styles.modalOverlay}>

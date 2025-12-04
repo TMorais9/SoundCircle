@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../components/Header";
-import Menu from "../components/Menu";
 import styles from "./conta.module.css";
 import useSignIn from "react-auth-kit/hooks/useSignIn";
 import useSignOut from "react-auth-kit/hooks/useSignOut";
@@ -842,28 +840,19 @@ function Conta() {
     );
 
     if (!isAuthenticated) {
-        return (
-            <>
-                <Header />
-                {renderAuthModal()}
-            </>
-        );
+        return renderAuthModal();
     }
 
     if (!perfilCarregado) {
         return (
-            <>
-                <Header />
-                <main className={styles.infoPage}>
-                    <p>A carregar o teu perfil...</p>
-                </main>
-            </>
+            <main className={styles.infoPage}>
+                <p>A carregar o teu perfil...</p>
+            </main>
         );
     }
 
     return (
         <>
-            <Header />
             <main className={styles.infoPage}>
                 <button className={styles.backButton} onClick={() => navigate("/")}>
                     <span className="material-symbols-outlined">arrow_back</span>
@@ -1069,8 +1058,6 @@ function Conta() {
                     </button>
                 </div>
             </main>
-
-            <Menu />
         </>
     );
 }

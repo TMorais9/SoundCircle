@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import useAuthUser from "react-auth-kit/hooks/useAuthUser";
-import Header from "../components/Header";
-import Menu from "../components/Menu";
 import styles from "./messages.module.css";
 import UsersAPI, { API_BASE_URL } from "../services/usersAPI";
 import MessagesAPI from "../services/messagesAPI";
@@ -259,7 +257,6 @@ function Messages() {
 
     return (
         <>
-            <Header />
             <main className={`${styles.messagesPage} ${fadeOutPage ? styles.fadeOutPage : ""}`}>
                 <button
                     className={styles.backButton}
@@ -300,8 +297,6 @@ function Messages() {
                     )}
                 </section>
             </main>
-
-            <Menu />
 
             {selectedChat && (
                 <div className={`${styles.chatModalOverlay} ${closingChat ? styles.fadeOut : ""}`}>

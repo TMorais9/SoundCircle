@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import useAuthUser from "react-auth-kit/hooks/useAuthUser";
-import Header from "../components/Header";
-import Menu from "../components/Menu";
 import styles from "./info.module.css";
 import UsersAPI, { API_BASE_URL } from "../services/usersAPI";
 
@@ -170,7 +168,6 @@ function Info() {
 
     return (
         <>
-            <Header />
             <main className={`${styles.infoPage} ${fadeOut ? styles.fadeOut : ""}`}>
                 <button
                     className={styles.backButton}
@@ -257,7 +254,6 @@ function Info() {
                     </>
                 )}
             </main>
-            <Menu />
 
             {isModalOpen && profile && (
                 <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>

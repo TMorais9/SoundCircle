@@ -26,7 +26,24 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     justify-content: flex-start;
-    padding-bottom: 100px;
+}
+
+.appShell {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+.contentArea {
+    flex: 1;
+    padding-left: var(--sidebar-collapsed, 80px);
+    display: flex;
+    flex-direction: column;
+    transition: padding 0.25s ease;
+}
+
+.appShell .sidebar:hover + .contentArea {
+    padding-left: var(--sidebar-expanded, 220px);
 }
