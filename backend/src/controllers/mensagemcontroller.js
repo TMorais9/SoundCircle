@@ -37,42 +37,42 @@ exports.send = (req, res) => {
   });
 };
 
-exports.createComMedia = (req, res) => {
-  const { remetente_id, destinatario_id, conteudo } = req.body;
-  const file = req.file;
-
-  if (!file) {
-    return res.status(400).json({ message: 'Nenhum ficheiro enviado' });
-  }
-
-  let media_tipo = null;
-  if (file.mimetype.startsWith('image/')) media_tipo = 'imagem';
-  else if (file.mimetype.startsWith('video/')) media_tipo = 'video';
-  else {
-    return res.status(400).json({ message: 'Tipo de ficheiro não suportado' });
-  }
-
-  const media_path = `/uploads_mensagens/${file.filename}`;
-
-  Mensagem.send(
-    {
-      remetente_id,
-      destinatario_id,
-      conteudo: conteudo || null,
-      media_path,
-      media_tipo,
-    },
-    (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-
-      res.status(201).json({
-        message: 'Mensagem com media enviada',
-        media_path,
-        media_tipo,
-      });
-    }
-  );
-};
+//exports.createComMedia = (req, res) => {
+//  const { remetente_id, destinatario_id, conteudo } = req.body;
+//  const file = req.file;
+//
+//  if (!file) {
+//    return res.status(400).json({ message: 'Nenhum ficheiro enviado' });
+//  }
+//
+//  let media_tipo = null;
+//  if (file.mimetype.startsWith('image/')) media_tipo = 'imagem';
+//  else if (file.mimetype.startsWith('video/')) media_tipo = 'video';
+//  else {
+//    return res.status(400).json({ message: 'Tipo de ficheiro não suportado' });
+//  }
+//
+//  const media_path = `/uploads_mensagens/${file.filename}`;
+//
+//  Mensagem.send(
+//    {
+//      remetente_id,
+//      destinatario_id,
+//      conteudo: conteudo || null,
+//      media_path,
+//      media_tipo,
+//    },
+//    (err) => {
+//      if (err) return res.status(500).json({ error: err.message });
+//
+//      res.status(201).json({
+//        message: 'Mensagem com media enviada',
+//        media_path,
+//        media_tipo,
+//      });
+//    }
+//  );
+//};
 
 exports.delete = (req, res) => {
   const { id } = req.params;

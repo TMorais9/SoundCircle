@@ -7,6 +7,59 @@ import UsersAPI, { API_BASE_URL } from "../services/usersAPI";
 const PLACEHOLDER =
     "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
 
+const OVERLAY =
+    "linear-gradient(rgba(255, 255, 255, 0.307), rgba(255, 255, 255, 0.658))";
+
+const INSTRUMENT_BACKGROUNDS = {
+    guitar: { image: "/guitar.png", size: "100%", position: "center" },
+    drums: { image: "/drums.png", size: "100%", position: "center" },
+    bass: { image: "/bass.png", size: "100%", position: "center" },
+    piano: { image: "/piano.png", size: "100%", position: "bottom" },
+    voice: { image: "/micro.png", size: "100%", position: "top" },
+};
+
+const normalizeInstrumentName = (value) =>
+    (value || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+
+const resolveInstrumentKey = (instrumentName) => {
+    const normalized = normalizeInstrumentName(instrumentName);
+    if (normalized.includes("guit")) return "guitar";
+    if (normalized.includes("drum") || normalized.includes("bater")) return "drums";
+    if (
+        normalized.includes("bass") ||
+        normalized.includes("baix") ||
+        normalized.includes("contrabaixo")
+    )
+        return "bass";
+    if (normalized.includes("pian") || normalized.includes("tecl")) return "piano";
+    if (
+        normalized.includes("voz") ||
+        normalized.includes("vocal") ||
+        normalized.includes("cantar") ||
+        normalized.includes("micro")
+    )
+        return "voice";
+    return "default";
+};
+
+const buildBackgroundStyle = (instrumentName) => {
+    const key = resolveInstrumentKey(instrumentName);
+    const config = INSTRUMENT_BACKGROUNDS[key] || INSTRUMENT_BACKGROUNDS.default;
+    if (!config) {
+        return { backgroundImage: OVERLAY };
+    }
+    return {
+        backgroundImage: `${OVERLAY}, url('${config.image}')`,
+        backgroundSize: `cover, ${config.size}`,
+        backgroundPosition: `center, ${config.position}`,
+        backgroundRepeat: "no-repeat, no-repeat",
+    };
+};
+
 const resolvePhotoUrl = (value) => {
     if (!value) return PLACEHOLDER;
     if (value.startsWith("data:") || value.startsWith("http://") || value.startsWith("https://"))
@@ -166,6 +219,18 @@ function Info() {
         ? profile.caracteristicas
         : [];
 
+    const backgroundStyle = useMemo(() => {
+        const firstInstrument =
+            profile?.instrumentosDetalhes?.find((inst) => inst?.nome)?.nome ||
+            profile?.instrumentosDetalhes?.[0]?.rotulo ||
+            null;
+        const instrumentName =
+            firstInstrument ||
+            profile?.instrumento ||
+            profile?.nome; // última hipótese para bandas/artistas sem instrumento definido
+        return buildBackgroundStyle(instrumentName);
+    }, [profile?.instrumento, profile?.instrumentosDetalhes, profile?.nome]);
+
     return (
         <>
             <main className={`${styles.infoPage} ${fadeOut ? styles.fadeOut : ""}`}>
@@ -182,7 +247,7 @@ function Info() {
                     <p className={styles.errorMessage}>{error}</p>
                 ) : (
                     <>
-                        <div className={styles.profileContainer}>
+                        <div className={styles.profileContainer} style={backgroundStyle}>
                             <div className={styles.leftSection}>
                                 <img
                                     className={styles.photo}
@@ -211,30 +276,30 @@ function Info() {
                                 <div className={styles.description}>
                                     <h2>Sobre</h2>
                                     <p>{profile?.descricao || "Este músico ainda não adicionou uma descrição."}</p>
-                                </div>
-                                <div className={styles.buttonArea}>
-                                    {profile?.id && Number(profile.id) !== Number(currentUserId) && (
-                                        <button
-                                            className={styles.messageButton}
-                                            onClick={() => {
-                                                setFadeOut(true);
-                                                setTimeout(
-                                                    () =>
-                                                        navigate(`/messages?user=${profile.id}`, {
-                                                            state: {
-                                                                targetUser: {
-                                                                    id: profile.id,
-                                                                    nome: profile.nome,
-                                                                    foto: profile.foto,
+                                    <div className={styles.buttonArea}>
+                                        {profile?.id && Number(profile.id) !== Number(currentUserId) && (
+                                            <button
+                                                className={styles.messageButton}
+                                                onClick={() => {
+                                                    setFadeOut(true);
+                                                    setTimeout(
+                                                        () =>
+                                                            navigate(`/messages?user=${profile.id}`, {
+                                                                state: {
+                                                                    targetUser: {
+                                                                        id: profile.id,
+                                                                        nome: profile.nome,
+                                                                        foto: profile.foto,
+                                                                    },
                                                                 },
-                                                            },
-                                                        }),
-                                                    250
-                                                );
-                                            }}>
-                                            <span className="material-symbols-outlined">message</span>
-                                        </button>
-                                    )}
+                                                            }),
+                                                        250
+                                                    );
+                                                }}>
+                                                <span className="material-symbols-outlined">message</span>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -152,7 +152,7 @@
 .searchOverlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.65);
+    background: rgba(142, 142, 142, 0.283);
     backdrop-filter: blur(6px);
     display: flex;
     justify-content: center;
@@ -164,12 +164,11 @@
 
 .searchModal {
     width: min(1200px, 100%);
-    background: #fffaf3;
     border-radius: 22px;
-    border: 1px solid rgba(255, 88, 35, 0.18);
+    background: rgba(255, 255, 255, 0.1);
     box-shadow:
-        0 20px 50px rgba(0, 0, 0, 0.16),
-        0 0 0 1px rgba(255, 88, 35, 0.08);
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
     padding: 22px 22px 30px;
     display: flex;
     flex-direction: column;
@@ -189,8 +188,8 @@
     margin: 0;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    font-size: 12px;
-    color: #ff8850;
+    font-size: 15px;
+    color: #ff5823;
     font-weight: 700;
     font-family: "Poppins", sans-serif;
 }
@@ -267,7 +266,7 @@
 }
 
 .searchClear:hover {
-    background: #ffd9c2;
+    background: rgba(255, 255, 255, 0.658);
     transform: translateY(-1px);
 }
 
@@ -279,7 +278,7 @@
 }
 
 .searchResultsShell {
-    background: #fff;
+    background: rgba(255, 255, 255, 0.658);
     border-radius: 16px;
     border: 1px solid rgba(255, 88, 35, 0.12);
     padding: 18px 12px 6px;
@@ -310,7 +309,7 @@
     align-items: center;
     gap: 14px;
     padding: 12px 14px;
-    background: #fffaf3;
+    background: rgba(255, 255, 255, 0.658);
     border-radius: 14px;
     border: 1px solid rgba(255, 88, 35, 0.12);
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
@@ -482,11 +481,11 @@
         font-size: 22px;
     }
 }
-/* --- MODAL DE TUTORIAL (layout original) --- */
+
 .modalOverlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.283);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -501,9 +500,11 @@
     width: 100%;
     max-width: 1350px;
     height: 85vh;
-    background: #fffaf3;
     border-radius: 22px;
-    box-shadow: 0 10px 40px rgba(255, 88, 35, 0.25);
+    background: rgb(255, 255, 255);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
     overflow: hidden;
     border: 1px solid rgba(255, 88, 35, 0.15);
     animation: slideUp 0.3s ease;
@@ -541,6 +542,7 @@
 
 .modalRight p {
     font-size: 17px;
+    font-weight: 600;
     line-height: 1.7;
     color: #333;
 }

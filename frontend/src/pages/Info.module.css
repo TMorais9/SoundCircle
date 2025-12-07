@@ -39,7 +39,6 @@
     }
 }
 
-/* --- Fade-out ao voltar --- */
 .fadeOut {
     opacity: 0;
     transform: translateY(20px);
@@ -105,12 +104,11 @@
     max-width: 1200px;
     min-height: 400px;
     transition: all 0.3s ease;
-    background-image: url('./guitarra.png');
+    background: linear-gradient(rgba(255, 255, 255, 0.307), rgba(255, 255, 255, 0.658));
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     border-radius: 25px;
-    border: 1px solid rgba(255, 88, 35, 0.15);
     box-shadow: 0 8px 25px rgba(255, 88, 35, 0.1);
     backdrop-filter: blur(8px);
 }
@@ -219,13 +217,13 @@
 
 .basicInfo {
     font-size: 18px;
-    color: #555;
+    color: #464646;
     font-weight: 500;
 }
 
 .experience {
     font-size: 16px;
-    color: #666;
+    color: #464646;
 }
 
 .rightSection {
@@ -236,6 +234,11 @@
 }
 
 .description {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    font-family: poppins, sans-serif;
+    gap: 2px;
     border-radius: 15px;
     padding: 25px 30px;
     line-height: 1.7;
@@ -243,18 +246,24 @@
     width: 100%;
     height: 100%;
     transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.658);
+    background: rgba(255, 255, 255, 0.256);
 }
 
 .description h2 {
-    font-size: 22px;
-    font-weight: 600;
-    color: #FF5823;
-    margin-bottom: 12px;
+    font-size: 26px;
+    font-weight: 700;
+    color: #222;
+}
+
+.description p {
+    font-size: 16px;
+    font-weight: 400;
+    color: #464646;
+    margin-bottom: 2px;
 }
 
 .buttonArea {
-    margin-top: 40px;
+    margin-top: auto;
     width: 100%;
     display: flex;
     justify-content: flex-end;
@@ -281,6 +290,7 @@
 .messageButton:hover {
     background: linear-gradient(90deg, #ff6b3e, #ff9a66);
     transform: scale(1.04);
+    transform: translateY(-4px);
     box-shadow: 0 8px 26px rgba(255, 88, 35, 0.35);
 }
 
@@ -317,8 +327,8 @@
 }
 
 .traitCard:hover {
-    background: linear-gradient(90deg, #FF5823, #FF8850);
-    color: #fff;
+    background: rgb(255, 255, 255);
+    color: #000;
     box-shadow: 0 8px 24px rgba(255, 88, 35, 0.25);
     transform: translateY(-4px);
 }
@@ -351,6 +361,7 @@
 
     .buttonArea {
         justify-content: center;
+        margin-top: auto;
     }
 
     .messageButton {
@@ -408,7 +419,7 @@
 
     .buttonArea {
         justify-content: center;
-        margin-top: 25px;
+        margin-top: auto;
     }
 
     .messageButton {

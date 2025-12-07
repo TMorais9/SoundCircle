@@ -42,11 +42,6 @@
     border: none;
 }
 
-.logoArea:hover {
-    background: rgba(255, 255, 255, 0.12);
-    transform: translateX(2px);
-}
-
 .logo {
     position: absolute;
     inset: 0 12px;
