@@ -1,10 +1,12 @@
 .sidebar {
     position: fixed;
-    inset: 0 auto 0 0;
-    height: 100vh;
-    width: var(--sidebar-collapsed, 80px);
-    background: linear-gradient(180deg, #ff5823, #ff8850);
-    box-shadow: 0 14px 32px rgba(255, 88, 35, 0.28);
+    inset: 12px auto 12px 12px;
+    height: calc(100vh - 24px);
+    width: var(--sidebar-collapsed, 100px);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
     padding: 18px 12px;
     display: flex;
     flex-direction: column;
@@ -12,16 +14,19 @@
     gap: 20px;
     z-index: 1200;
     transition: width 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
-    border-radius: 0 22px 22px 0;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     overflow: hidden;
     isolation: isolate;
+    transform: translateZ(0) translateY(4px);
 }
 
 .sidebar:hover {
-    width: var(--sidebar-expanded, 220px);
-    box-shadow: 0 18px 36px rgba(255, 88, 35, 0.34);
+    width: var(--sidebar-expanded, 260px);
+    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.24);
+    transform: translateY(-2px);
 }
 
 .logoArea {
@@ -72,85 +77,50 @@
 }
 
 .logoImg {
-    height: 64px;
+    height: 80px;
     width: auto;
     object-fit: contain;
     display: block;
-    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.18));
-}
-
-.logoImgActive {
-    filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.26));
-}
-
-.logoText {
-    font-family: "Poppins", sans-serif;
-    font-weight: 600;
-    font-size: 12px;
-    letter-spacing: 0.4px;
-    text-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
 }
 
 .nav {
     width: 100%;
     display: flex;
     flex-direction: column;
+    gap: 8px;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
 }
 
 .navItem {
-    border: none;
-    outline: none;
-    background: transparent;
-    color: #fff;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 12px 14px;
-    width: 100%;
+    padding: 10px 12px;
     min-height: 52px;
     border-radius: 16px;
-    cursor: pointer;
-    font-family: "Poppins", sans-serif;
-    font-weight: 300;
-    font-size: 9px;
-    letter-spacing: 0.05px;
-    transition: background 0.18s ease, transform 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    color: #fff;
     text-decoration: none;
-    position: relative;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    background: transparent;
 }
 
-.navItem span {
-    font-size: 34px;
+.navIcon {
+    font-size: 40px !important;
+    line-height: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
 }
 
-.navItem::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(120deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0));
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.navItem > span,
-.navItem > .navLabel {
-    position: relative;
-    z-index: 1;
-}
-
 .navLabel {
     font-family: "Poppins", sans-serif;
-    font-size: 1px;
-    font-weight: 500;
-    line-height: 1.1;
-    white-space: nowrap;
+    font-size: 22px;
+    font-weight: 600;
     opacity: 0;
     max-width: 0;
+    white-space: nowrap;
     overflow: hidden;
     transition: opacity 0.2s ease, max-width 0.2s ease, margin 0.2s ease;
 }
@@ -158,52 +128,38 @@
 .sidebar:hover .navItem {
     justify-content: flex-start;
     padding-left: 12px;
-    padding-right: 12px;
-    background: rgba(255, 255, 255, 0.12);
 }
 
 .sidebar:hover .navLabel {
     opacity: 1;
-    max-width: 100%;
-    margin-left: 6px;
+    max-width: 200px;
+    margin-left: 10px;
 }
 
 .navItem:hover {
-    background: rgba(255, 255, 255, 0.16);
     transform: translateX(2px);
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
-}
-
-.navItem:hover::after {
-    opacity: 1;
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.14);
 }
 
 .active {
-    background: rgba(255, 255, 255, 0.22);
-    box-shadow: 0 6px 14px rgba(255, 88, 35, 0.24), 0 10px 30px rgba(0, 0, 0, 0.14);
+    background: rgba(255, 255, 255, 0.18);
+    box-shadow:
+        0 6px 14px rgba(0, 0, 0, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    transform: translateX(2px);
 }
 
 @media (max-width: 768px) {
     .sidebar {
-        width: 72px;
-        padding: 16px 10px;
+        width: 85px;
     }
 
     .sidebar:hover {
-        width: 180px;
+        width: 220px;
     }
 
-    .logoIcon {
-        font-size: 30px;
-    }
-
-    .navItem {
-        padding: 10px 12px;
-        min-height: 48px;
-    }
-
-    .navItem span {
+    .navIcon {
         font-size: 26px;
-        min-width: 30px;
     }
 }

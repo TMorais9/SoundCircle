@@ -5,10 +5,9 @@
     justify-content: flex-start;
     width: 100%;
     min-height: 100vh;
-    padding: 15px 20px;
+    padding: 80px 20px;
     color: #222;
     font-family: "Poppins", sans-serif;
-    margin-top: 120px;
     box-sizing: border-box;
     opacity: 1;
     transform: translateY(0);
@@ -50,7 +49,7 @@
     margin-left: 70px;
     position: absolute;
     align-self: flex-start;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.658);
     border: none;
     border-radius: 50%;
     width: 48px;
@@ -99,7 +98,6 @@
 .profileContainer {
     display: flex;
     flex-direction: row;
-    align-items: center;
     justify-content: flex-start;
     gap: 40px;
     padding: 30px 40px;
@@ -107,7 +105,10 @@
     max-width: 1200px;
     min-height: 400px;
     transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.85);
+    background-image: url('./guitarra.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     border-radius: 25px;
     border: 1px solid rgba(255, 88, 35, 0.15);
     box-shadow: 0 8px 25px rgba(255, 88, 35, 0.1);
@@ -235,13 +236,14 @@
 }
 
 .description {
-    margin-top: 25px;
     border-radius: 15px;
     padding: 25px 30px;
     line-height: 1.7;
     text-align: justify;
     width: 100%;
+    height: 100%;
     transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.658);
 }
 
 .description h2 {
@@ -300,7 +302,7 @@
 
 .traitCard {
     transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.658);
     border-radius: 20px;
     border: 1px solid rgba(255, 88, 35, 0.15);
     box-shadow: 0 8px 25px rgba(255, 88, 35, 0.1);

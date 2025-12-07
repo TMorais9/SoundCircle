@@ -234,7 +234,6 @@
     display: flex;
     align-items: center;
     padding: 15px 20px;
-    background: rgba(255, 88, 35, 0.9);
     background: linear-gradient(90deg, #FF5823, #FF8850);
     color: white;
     position: relative;

@@ -3,24 +3,21 @@ import styles from "./Sidebar.module.css";
 
 const NAV_ITEMS = [
     { label: "Home", icon: "home", to: "/", end: true },
-    { label: "Pesquisar", icon: "travel_explore", to: "/search" },
+    { label: "Pesquisar", icon: "search", to: "/search" },
     { label: "Mensagens", icon: "forum", to: "/messages" },
-    { label: "AI", icon: "smart_toy", to: "/ai" },
-    { label: "Conta", icon: "account_circle", to: "/conta" },
+    { label: "AI", icon: "network_intelligence", to: "/ai" },
+    { label: "Conta", icon: "person", to: "/conta" },
 ];
 
 function Sidebar() {
     const navigate = useNavigate();
 
     return (
-        <aside
-            className={styles.sidebar}
-            style={{ "--sidebar-collapsed": "80px", "--sidebar-expanded": "220px" }}
-        >
+        <aside className={styles.sidebar}>
+
             <button
                 type="button"
                 className={styles.logoArea}
-                onClick={() => navigate("/")}
                 aria-label="SoundCircle"
             >
                 <div className={`${styles.logo} ${styles.logoCollapsed}`}>
@@ -49,13 +46,17 @@ function Sidebar() {
                             `${styles.navItem} ${isActive ? styles.active : ""}`
                         }
                     >
-                        <span className="material-symbols-outlined" aria-hidden="true">
+                        <span
+                            className={`material-symbols-outlined ${styles.navIcon}`}
+                            aria-hidden="true"
+                        >
                             {item.icon}
                         </span>
                         <span className={styles.navLabel}>{item.label}</span>
                     </NavLink>
                 ))}
             </nav>
+
         </aside>
     );
 }

@@ -202,14 +202,16 @@ function Info() {
                                 {profile?.anosExperiencia !== null &&
                                     profile?.anosExperiencia !== undefined &&
                                     profile?.anosExperiencia !== "" && (
-                                    <p className={styles.experience}>
-                                        A tocar há {profile.anosExperiencia} ano(s)
-                                    </p>
+                                        <p className={styles.experience}>
+                                            A tocar há {profile.anosExperiencia} ano(s)
+                                        </p>
                                     )}
                             </div>
-                            <div className={styles.description}>
-                                <h2>Sobre</h2>
-                                <p>{profile?.descricao || "Este músico ainda não adicionou uma descrição."}</p>
+                            <div className={styles.rightSection}>
+                                <div className={styles.description}>
+                                    <h2>Sobre</h2>
+                                    <p>{profile?.descricao || "Este músico ainda não adicionou uma descrição."}</p>
+                                </div>
                                 <div className={styles.buttonArea}>
                                     {profile?.id && Number(profile.id) !== Number(currentUserId) && (
                                         <button

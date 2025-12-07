@@ -35,18 +35,19 @@
     padding: 30px 40px;
     width: 100%;
     max-width: 1200px;
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.658);
     border-radius: 25px;
     border: 1px solid rgba(255, 88, 35, 0.15);
     box-shadow: 0 8px 25px rgba(255, 88, 35, 0.1);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .backButton {
     margin-left: 70px;
     position: absolute;
     align-self: flex-start;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.658);
     border: none;
     border-radius: 50%;
     width: 48px;
@@ -186,7 +187,7 @@
     font-size: 16px;
     font-family: "Poppins", sans-serif;
     color: #222;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.658);
     line-height: 1.7;
     text-align: justify;
     box-sizing: border-box;
@@ -224,7 +225,7 @@
     font-size: 16px;
     font-family: "Poppins", sans-serif;
     color: #222;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.658);
     transition: border 0.3s ease;
 }
 
@@ -247,7 +248,7 @@
 
 .inputText:focus,
 .inputArea:focus {
-    border-color: #FF5823;
+    border-color: #ff5823;
     outline: none;
 }
 
@@ -325,7 +326,7 @@
 .traitCard {
     height: 60px;
     transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.658);
     border-radius: 20px;
     border: 1px solid rgba(255, 88, 35, 0.15);
     box-shadow: 0 8px 25px rgba(255, 88, 35, 0.1);
