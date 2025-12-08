@@ -203,7 +203,18 @@ function Home() {
                 <div className={styles.modalOverlay}>
                     <div className={styles.tutorialModal}>
                         <div className={styles.modalLeft}>
-                            <img src={paginas[paginaAtual].imagem} alt={paginas[paginaAtual].titulo} />
+                            {paginaAtual === 0 ? (
+                                <div className={styles.welcomeVisual}>
+                                    <div className={styles.welcomeTextBlock}>
+                                        <span className={styles.welcomeTitle}>BEM-VINDO</span>
+                                        <span className={styles.welcomeSubtitle}>AO SOUND</span>
+                                        <span className={styles.welcomeSubtitle}>CIRCLE</span>
+                                    </div>
+                                    <div className={styles.welcomeMark} aria-hidden="true" />
+                                </div>
+                            ) : (
+                                <img src={paginas[paginaAtual].imagem} alt={paginas[paginaAtual].titulo} />
+                            )}
                         </div>
                         <div className={styles.modalRight}>
                             <h2>{paginas[paginaAtual].titulo}</h2>

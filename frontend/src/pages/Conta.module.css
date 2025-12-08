@@ -38,7 +38,9 @@
     background: rgba(255, 255, 255, 0.658);
     border-radius: 25px;
     border: 1px solid rgba(255, 88, 35, 0.15);
-    box-shadow: 0 8px 25px rgba(255, 88, 35, 0.1);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
 }
@@ -58,13 +60,18 @@
     cursor: pointer;
     color: #ff5823;
     font-size: 26px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
     transition: all 0.25s ease;
     z-index: 1;
 }
 
 .backButton:hover {
     background: #ff5823;
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
     color: #fff;
     transform: scale(1.05);
 }
@@ -109,7 +116,9 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(255, 88, 35, 0.25);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
     transition: transform 0.2s ease, box-shadow 0.3s ease;
     color: white;
     z-index: 2;
@@ -178,9 +187,7 @@
 .inputArea {
     width: 100%;
     min-height: 200px;
-    /* 🔸 mais alta para edição confortável */
     max-height: 400px;
-    /* evita que cresça demais */
     border: 1px solid rgba(255, 88, 35, 0.3);
     border-radius: 10px;
     padding: 25px 30px;
@@ -194,7 +201,6 @@
     resize: none;
     transition: border 0.3s ease, box-shadow 0.3s ease;
     overflow-y: auto;
-    /* 🔸 scroll apenas no modo edição */
 }
 
 .inputArea::-webkit-scrollbar {
@@ -329,7 +335,9 @@
     background: rgba(255, 255, 255, 0.658);
     border-radius: 20px;
     border: 1px solid rgba(255, 88, 35, 0.15);
-    box-shadow: 0 8px 25px rgba(255, 88, 35, 0.1);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
     padding: 0 15px;
     display: flex;
     justify-content: space-between;
@@ -364,7 +372,9 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 4px 15px rgba(255, 88, 35, 0.25);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
     transition: all 0.3s ease;
 }
 
@@ -415,7 +425,6 @@
     justify-content: center;
     margin-top: 50px;
     margin-bottom: 100px;
-    /* espaço antes do menu fixo */
 }
 
 .signOutButton {
@@ -430,7 +439,9 @@
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(255, 88, 35, 0.25);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
     transition: transform 0.25s ease, box-shadow 0.3s ease, background 0.3s ease;
 }
 
