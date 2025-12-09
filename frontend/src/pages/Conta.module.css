@@ -489,6 +489,34 @@
     margin-bottom: 25px;
 }
 
+.profileTypeToggle {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.typeOption {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 2px solid #ff5823;
+    background: #fff;
+    color: #ff5823;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.typeOptionActive {
+    background: linear-gradient(90deg, #ff5823, #ff8850);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(255, 88, 35, 0.3);
+}
+
+.typeOption:hover {
+    transform: translateY(-1px);
+}
+
 .authError {
     margin-bottom: 16px;
     padding: 10px 14px;

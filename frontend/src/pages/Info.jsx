@@ -73,6 +73,14 @@ const toDateInputValue = (value) => {
     return value.split("T")[0];
 };
 
+const formatDatePt = (value) => {
+    const iso = toDateInputValue(value);
+    if (!iso) return "";
+    const [year, month, day] = iso.split("-");
+    if (!year || !month || !day) return "";
+    return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+};
+
 const parseDateOnly = (value) => {
     if (!value) return null;
     const [year, month, day] = toDateInputValue(value).split("-").map(Number);
@@ -153,6 +161,7 @@ const mapProfile = (payload) => {
         anosExperiencia: instrumentosDetalhes[0]?.anosExperiencia ?? null,
         descricao: user.descricao,
         foto: resolvePhotoUrl(user.foto_url),
+        dataNascimento: user.data_nascimento || null,
         caracteristicas: carNames.length
             ? carNames
             : instrumentosDetalhes.length
@@ -242,21 +251,36 @@ function Info() {
                                     onClick={() => setIsModalOpen(true)}
                                 />
                                 <h1 className={styles.name}>{profile?.nome}</h1>
-                                <p className={styles.basicInfo}>
-                                    {profile?.instrumento}
-                                </p>
-                                <p className={styles.basicInfo}>
-                                    {profile?.idade ? `${profile.idade} anos` : "Idade não definida"}
-                                    {profile?.sexo ? ` · ${profile.sexo}` : ""}
-                                    {profile?.localizacao ? ` · ${profile.localizacao}` : ""}
-                                </p>
-                                {profile?.anosExperiencia !== null &&
-                                    profile?.anosExperiencia !== undefined &&
-                                    profile?.anosExperiencia !== "" && (
-                                        <p className={styles.experience}>
-                                            A tocar há {profile.anosExperiencia} ano(s)
+                                {profile?.tipo === "banda" ? (
+                                    <>
+                                        {profile?.dataNascimento && (
+                                            <p className={styles.basicInfo}>
+                                                Desde: {formatDatePt(profile.dataNascimento)}
+                                            </p>
+                                        )}
+                                        {profile?.localizacao && (
+                                            <p className={styles.basicInfo}>{profile.localizacao}</p>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className={styles.basicInfo}>
+                                            {profile?.instrumento}
                                         </p>
-                                    )}
+                                        <p className={styles.basicInfo}>
+                                            {profile?.idade ? `${profile.idade} anos` : "Idade não definida"}
+                                            {profile?.sexo ? ` · ${profile.sexo}` : ""}
+                                            {profile?.localizacao ? ` · ${profile.localizacao}` : ""}
+                                        </p>
+                                        {profile?.anosExperiencia !== null &&
+                                            profile?.anosExperiencia !== undefined &&
+                                            profile?.anosExperiencia !== "" && (
+                                                <p className={styles.experience}>
+                                                    A tocar há {profile.anosExperiencia} ano(s)
+                                                </p>
+                                            )}
+                                    </>
+                                )}
                             </div>
                             <div className={styles.rightSection}>
                                 <div className={styles.description}>
@@ -266,22 +290,17 @@ function Info() {
                                         {profile?.id && Number(profile.id) !== Number(currentUserId) && (
                                             <button
                                                 className={styles.messageButton}
-                                                onClick={() => {
-                                                    setFadeOut(true);
-                                                    setTimeout(
-                                                        () =>
-                                                            navigate(`/messages?user=${profile.id}`, {
-                                                                state: {
-                                                                    targetUser: {
-                                                                        id: profile.id,
-                                                                        nome: profile.nome,
-                                                                        foto: profile.foto,
-                                                                    },
-                                                                },
-                                                            }),
-                                                        250
-                                                    );
-                                                }}>
+                                                onClick={() =>
+                                                    navigate(`/messages?user=${profile.id}`, {
+                                                        state: {
+                                                            targetUser: {
+                                                                id: profile.id,
+                                                                nome: profile.nome,
+                                                                foto: profile.foto,
+                                                            },
+                                                        },
+                                                    })
+                                                }>
                                                 <span className="material-symbols-outlined">message</span>
                                             </button>
                                         )}

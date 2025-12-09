@@ -40,6 +40,7 @@ const INITIAL_REGISTER_STATE = {
     foto: "",
     password: "",
     confirmPassword: "",
+    tipo: "solo",
 };
 
 const INITIAL_LOGIN_STATE = {
@@ -79,6 +80,14 @@ const INSTRUMENTS = [
 const toDateInputValue = (value) => {
     if (!value) return "";
     return value.split("T")[0];
+};
+
+const formatDatePt = (value) => {
+    const iso = toDateInputValue(value);
+    if (!iso) return "";
+    const [year, month, day] = iso.split("-");
+    if (!year || !month || !day) return "";
+    return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
 };
 
 const parseDateOnly = (value) => {
@@ -221,6 +230,8 @@ function Conta() {
 
     const [novoPerfil, setNovoPerfil] = useState({ ...INITIAL_REGISTER_STATE });
     const [loginData, setLoginData] = useState({ ...INITIAL_LOGIN_STATE });
+    const isPerfilBanda = novoPerfil.tipo === "banda";
+    const isPerfilBandaLogado = perfil?.tipo === "banda";
 
     const fetchPerfil = useCallback(async (userId) => {
         const response = await UsersAPI.getProfile(userId);
@@ -362,6 +373,17 @@ function Conta() {
         setAuthError("");
     };
 
+    const handlePerfilTypeChange = (tipo) => {
+        setNovoPerfil((prev) => ({
+            ...prev,
+            tipo,
+            ...(tipo === "banda"
+                ? { sexo: "", instrumento: "", inicioExperiencia: "", anosExperiencia: "" }
+                : {}),
+        }));
+        setAuthError("");
+    };
+
     const persistProfileChanges = async () => {
         if (!currentUserId) {
             throw new Error("Sessão inválida. Inicia novamente.");
@@ -386,22 +408,31 @@ function Conta() {
                     ? null
                     : Number(perfil.anosExperiencia);
         const safeAnosExperiencia =
-            Number.isFinite(anosExperienciaValue) && anosExperienciaValue >= 0
-                ? anosExperienciaValue
-                : null;
+            isPerfilBandaLogado
+                ? null
+                : Number.isFinite(anosExperienciaValue) && anosExperienciaValue >= 0
+                    ? anosExperienciaValue
+                    : null;
+
+        const dataNascimentoPayload = perfil.dataNascimento || null;
+        const sexoPayload = isPerfilBandaLogado ? null : perfil.sexo;
+        const instrumentoPayload = isPerfilBandaLogado ? null : perfil.instrumento;
+        const instrumentoNivelPayload =
+            isPerfilBandaLogado || safeAnosExperiencia === null
+                ? null
+                : experienciaParaNivel(safeAnosExperiencia);
 
         const payload = {
             nome: perfil.nome.trim(),
             email: perfil.email.trim(),
             tipo: perfil.tipo || "solo",
-            sexo: perfil.sexo,
+            sexo: sexoPayload,
             localizacao: perfil.localizacao.trim() || null,
             descricao: perfil.descricao,
             foto_url: fotoUrlPayload,
-            data_nascimento: perfil.dataNascimento || null,
-            instrumento: perfil.instrumento,
-            instrumentoNivel:
-                safeAnosExperiencia !== null ? experienciaParaNivel(safeAnosExperiencia) : null,
+            data_nascimento: dataNascimentoPayload,
+            instrumento: instrumentoPayload,
+            instrumentoNivel: instrumentoNivelPayload,
             anosExperiencia: safeAnosExperiencia,
         };
 
@@ -539,23 +570,32 @@ function Conta() {
                         ? null
                         : Number(novoPerfil.anosExperiencia);
             const safeAnosExperiencia =
-                Number.isFinite(anosExperienciaValue) && anosExperienciaValue >= 0
-                    ? anosExperienciaValue
-                    : null;
+                isPerfilBanda
+                    ? null
+                    : Number.isFinite(anosExperienciaValue) && anosExperienciaValue >= 0
+                        ? anosExperienciaValue
+                        : null;
+
+            const dataNascimentoPayload = novoPerfil.dataNascimento || null;
+            const sexoPayload = isPerfilBanda ? null : novoPerfil.sexo;
+            const instrumentoPayload = isPerfilBanda ? null : novoPerfil.instrumento;
+            const instrumentoNivelPayload =
+                isPerfilBanda || safeAnosExperiencia === null
+                    ? null
+                    : experienciaParaNivel(safeAnosExperiencia);
 
             await UsersAPI.register({
                 nome: novoPerfil.nome,
                 email: novoPerfil.email,
                 password: novoPerfil.password,
-                tipo: "solo",
-                sexo: novoPerfil.sexo,
+                tipo: novoPerfil.tipo,
+                sexo: sexoPayload,
                 localizacao: novoPerfil.localizacao.trim() || null,
                 descricao: novoPerfil.descricao,
                 foto_url: fotoUrlPayload,
-                data_nascimento: novoPerfil.dataNascimento || null,
-                instrumento: novoPerfil.instrumento,
-                instrumentoNivel:
-                    safeAnosExperiencia !== null ? experienciaParaNivel(safeAnosExperiencia) : null,
+                data_nascimento: dataNascimentoPayload,
+                instrumento: instrumentoPayload,
+                instrumentoNivel: instrumentoNivelPayload,
                 anosExperiencia: safeAnosExperiencia,
             });
             const loggedUser = await authenticateUser(novoPerfil.email, novoPerfil.password);
@@ -647,7 +687,7 @@ function Conta() {
 
                             <label htmlFor="registoFotoInput" className={styles.registoFotoButton}>
                                 <span className="material-symbols-outlined">photo_camera</span>
-                                Alterar Foto
+                                Adicionar Foto
                             </label>
                             <input
                                 id="registoFotoInput"
@@ -665,6 +705,23 @@ function Conta() {
                                     setAuthError("");
                                 }}
                             />
+                        </div>
+
+                        <div className={styles.profileTypeToggle}>
+                            <button
+                                type="button"
+                                className={`${styles.typeOption} ${!isPerfilBanda ? styles.typeOptionActive : ""}`}
+                                onClick={() => handlePerfilTypeChange("solo")}
+                            >
+                                Perfil Solo
+                            </button>
+                            <button
+                                type="button"
+                                className={`${styles.typeOption} ${isPerfilBanda ? styles.typeOptionActive : ""}`}
+                                onClick={() => handlePerfilTypeChange("banda")}
+                            >
+                                Perfil Banda
+                            </button>
                         </div>
 
                         <input
@@ -698,46 +755,52 @@ function Conta() {
                             onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
                         />
 
-                        <select
-                            className={`${styles.loginInput} ${!novoPerfil.sexo ? styles.loginInputPlaceholder : ""}`}
-                            value={novoPerfil.sexo}
-                            onChange={(e) => {
-                                setNovoPerfil({ ...novoPerfil, sexo: e.target.value });
-                                setAuthError("");
-                            }}
-                        >
-                            <option value="" disabled>Sexo</option>
-                            <option value="Masculino">Masculino</option>
-                            <option value="Feminino">Feminino</option>
-                            <option value="Outro">Outro</option>
-                        </select>
+                        {!isPerfilBanda && (
+                            <select
+                                className={`${styles.loginInput} ${!novoPerfil.sexo ? styles.loginInputPlaceholder : ""}`}
+                                value={novoPerfil.sexo}
+                                onChange={(e) => {
+                                    setNovoPerfil({ ...novoPerfil, sexo: e.target.value });
+                                    setAuthError("");
+                                }}
+                            >
+                                <option value="" disabled>Sexo</option>
+                                <option value="Masculino">Masculino</option>
+                                <option value="Feminino">Feminino</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        )}
 
-                        <select
-                            className={`${styles.loginInput} ${!novoPerfil.instrumento ? styles.loginInputPlaceholder : ""}`}
-                            value={novoPerfil.instrumento}
-                            onChange={(e) => {
-                                setNovoPerfil({ ...novoPerfil, instrumento: e.target.value });
-                                setAuthError("");
-                            }}
-                        >
-                            <option value="" disabled>Instrumento</option>
-                            {INSTRUMENTS.map((instrumento) => (
-                                <option key={instrumento} value={instrumento}>{instrumento}</option>
-                            ))}
-                        </select>
+                        {!isPerfilBanda && (
+                            <select
+                                className={`${styles.loginInput} ${!novoPerfil.instrumento ? styles.loginInputPlaceholder : ""}`}
+                                value={novoPerfil.instrumento}
+                                onChange={(e) => {
+                                    setNovoPerfil({ ...novoPerfil, instrumento: e.target.value });
+                                    setAuthError("");
+                                }}
+                            >
+                                <option value="" disabled>Instrumento</option>
+                                {INSTRUMENTS.map((instrumento) => (
+                                    <option key={instrumento} value={instrumento}>{instrumento}</option>
+                                ))}
+                            </select>
+                        )}
 
-                        <input
-                            className={styles.loginInput}
-                            placeholder="Experiência"
-                            type={novoPerfil.inicioExperiencia ? "date" : "text"}
-                            value={novoPerfil.inicioExperiencia}
-                            onChange={(e) => {
-                                handleNovoInicioExperiencia(e.target.value);
-                                setAuthError("");
-                            }}
-                            onFocus={(e) => { e.target.type = "date"; }}
-                            onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
-                        />
+                        {!isPerfilBanda && (
+                            <input
+                                className={styles.loginInput}
+                                placeholder="Experiência"
+                                type={novoPerfil.inicioExperiencia ? "date" : "text"}
+                                value={novoPerfil.inicioExperiencia}
+                                onChange={(e) => {
+                                    handleNovoInicioExperiencia(e.target.value);
+                                    setAuthError("");
+                                }}
+                                onFocus={(e) => { e.target.type = "date"; }}
+                                onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
+                            />
+                        )}
                         <textarea
                             className={styles.loginInput}
                             placeholder="Descrição"
@@ -906,16 +969,18 @@ function Conta() {
                                     onFocus={(e) => { e.target.type = "date"; }}
                                     onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
                                 />
-                                <select
-                                    className={`${styles.inputText} ${!perfil.sexo ? styles.loginInputPlaceholder : ""}`}
-                                    value={perfil.sexo}
-                                    onChange={(e) => handleEditChange("sexo", e.target.value)}
-                                >
-                                    <option value="" disabled>Sexo</option>
-                                    <option value="Masculino">Masculino</option>
-                                    <option value="Feminino">Feminino</option>
-                                    <option value="Outro">Outro</option>
-                                </select>
+                                {!isPerfilBandaLogado && (
+                                    <select
+                                        className={`${styles.inputText} ${!perfil.sexo ? styles.loginInputPlaceholder : ""}`}
+                                        value={perfil.sexo}
+                                        onChange={(e) => handleEditChange("sexo", e.target.value)}
+                                    >
+                                        <option value="" disabled>Sexo</option>
+                                        <option value="Masculino">Masculino</option>
+                                        <option value="Feminino">Feminino</option>
+                                        <option value="Outro">Outro</option>
+                                    </select>
+                                )}
                                 <select
                                     className={`${styles.inputText} ${!perfil.localizacao ? styles.loginInputPlaceholder : ""}`}
                                     value={perfil.localizacao}
@@ -926,46 +991,63 @@ function Conta() {
                                         <option key={distrito} value={distrito}>{distrito}</option>
                                     ))}
                                 </select>
-                                <input className={styles.inputText} value={perfil.instrumento} onChange={(e) => handleEditChange("instrumento", e.target.value)} />
-                                <input
-                                    className={styles.inputText}
-                                    placeholder="Experiência"
-                                    value={perfil.inicioExperiencia}
-                                    type={perfil.inicioExperiencia ? "date" : "text"}
-                                    onChange={(e) => handleInicioExperienciaChange(e.target.value)}
-                                    onFocus={(e) => { e.target.type = "date"; }}
-                                    onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
-                                />
-
-                                <div className={styles.passwordGroup}>
+                                {!isPerfilBandaLogado && (
+                                    <input className={styles.inputText} value={perfil.instrumento} onChange={(e) => handleEditChange("instrumento", e.target.value)} />
+                                )}
+                                {!isPerfilBandaLogado && (
                                     <input
                                         className={styles.inputText}
-                                        type={mostrarPass ? "text" : "password"}
-                                        value={password}
-                                        placeholder="Nova palavra-passe"
-                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="Experiência"
+                                        value={perfil.inicioExperiencia}
+                                        type={perfil.inicioExperiencia ? "date" : "text"}
+                                        onChange={(e) => handleInicioExperienciaChange(e.target.value)}
+                                        onFocus={(e) => { e.target.type = "date"; }}
+                                        onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
                                     />
-                                    <button type="button" className={styles.showPass} onClick={() => setMostrarPass(!mostrarPass)}>
-                                        <span className="material-symbols-outlined">{mostrarPass ? "visibility_off" : "visibility"}</span>
-                                    </button>
-                                </div>
+                                )}
 
-                                <input
-                                    className={styles.inputText}
-                                    type="password"
-                                    placeholder="Confirmar palavra-passe"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                />
+                                {!isPerfilBandaLogado && (
+                                    <>
+                                        <div className={styles.passwordGroup}>
+                                            <input
+                                                className={styles.inputText}
+                                                type={mostrarPass ? "text" : "password"}
+                                                value={password}
+                                                placeholder="Nova palavra-passe"
+                                                onChange={(e) => setPassword(e.target.value)}
+                                            />
+                                            <button type="button" className={styles.showPass} onClick={() => setMostrarPass(!mostrarPass)}>
+                                                <span className="material-symbols-outlined">{mostrarPass ? "visibility_off" : "visibility"}</span>
+                                            </button>
+                                        </div>
+
+                                        <input
+                                            className={styles.inputText}
+                                            type="password"
+                                            placeholder="Confirmar palavra-passe"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                        />
+                                    </>
+                                )}
                             </>
                         ) : (
                             <>
                                 <h1 className={styles.name}>{perfil.nome}</h1>
-                                <p className={styles.basicInfo}>{perfil.idade} anos · {perfil.instrumento}</p>
+                                {!isPerfilBandaLogado && (
+                                    <p className={styles.basicInfo}>
+                                        {[perfil.idade ? `${perfil.idade} anos` : null, perfil.instrumento]
+                                            .filter(Boolean)
+                                            .join(" · ")}
+                                    </p>
+                                )}
+                                {isPerfilBandaLogado && perfil.dataNascimento && (
+                                    <p className={styles.basicInfo}>Desde: {formatDatePt(perfil.dataNascimento)}</p>
+                                )}
                                 {perfil.localizacao && <p className={styles.basicInfo}>{perfil.localizacao}</p>}
-                                {perfil.anosExperiencia !== "" && perfil.anosExperiencia !== null && (
+                                {!isPerfilBandaLogado && perfil.anosExperiencia !== "" && perfil.anosExperiencia !== null && (
                                     <p className={styles.experience}>
-                                        A tocar há {perfil.anosExperiencia} ano(s)
+                                        Experiência: {perfil.anosExperiencia} ano(s)
                                     </p>
                                 )}
                                 <p className={styles.basicInfo}>{perfil.email}</p>

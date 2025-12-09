@@ -44,6 +44,7 @@ function Home() {
     const [users, setUsers] = useState([]);
     const [usersLoading, setUsersLoading] = useState(true);
     const [usersError, setUsersError] = useState("");
+    const [filtroTipo, setFiltroTipo] = useState("todos");
 
     useEffect(() => {
         const skipModal = localStorage.getItem("skipInfoModal");
@@ -83,6 +84,11 @@ function Home() {
     };
 
     const filteredUsers = users.filter((user) => Number(user.id) !== Number(currentUserId));
+    const filteredByTipo = filteredUsers.filter((user) => {
+        if (filtroTipo === "banda") return String(user.tipo || "").toLowerCase() === "banda";
+        if (filtroTipo === "solo") return String(user.tipo || "").toLowerCase() !== "banda";
+        return true;
+    });
 
     const handleProfileClick = () => {
         setFadeOut(true);
@@ -166,10 +172,14 @@ function Home() {
         if (usersLoading) {
             return renderPlaceholderCards();
         }
-        if (usersError || !filteredUsers.length) {
+        if (usersError) {
             return renderPlaceholderCards();
         }
-        return filteredUsers.map((user) => {
+        if (!filteredByTipo.length) {
+            return <p className={styles.statusMessage}>Sem perfis para este filtro</p>;
+        }
+        return filteredByTipo.map((user) => {
+            const isBanda = String(user.tipo || "").toLowerCase() === "banda";
             const idade = calcularIdade(user.data_nascimento);
             const instrumentoLabel = user.instrumento_nome || user.instrumento || "";
             const localizacao = user.localizacao || "";
@@ -183,16 +193,20 @@ function Home() {
                     <div className={styles.cardInfo}>
                         <span className={styles.name}>{user.nome}</span>
                         <div className={styles.infoDetails}>
-                            {instrumentoLabel && idade && localizacao ? (
-                                <span className={styles.job}>
-                                    {instrumentoLabel} · {idade} anos · {localizacao}
-                                </span>
+                            {isBanda ? (
+                                <>
+                                    <span className={styles.job}>
+                                        {["Banda", idade ? `${idade} anos` : null, localizacao].filter(Boolean).join(" · ")}
+                                    </span>
+                                </>
                             ) : (
-                                <span className={styles.job}>
-                                    {[instrumentoLabel || "Instrumento não definido", idade ? `${idade} anos` : null, localizacao]
-                                        .filter(Boolean)
-                                        .join(" · ")}
-                                </span>
+                                <>
+                                    <span className={styles.job}>
+                                        {[instrumentoLabel || "Instrumento não definido", idade ? `${idade} anos` : null, localizacao]
+                                            .filter(Boolean)
+                                            .join(" · ")}
+                                    </span>
+                                </>
                             )}
                         </div>
                     </div>
@@ -204,6 +218,36 @@ function Home() {
 
     return (
         <>
+            <section className={styles.filterBar}>
+                <div>
+                    <p className={styles.filterEyebrow}>Explorar perfis</p>
+                    <h2 className={styles.filterTitle}>O que queres ver?</h2>
+                </div>
+                <div className={styles.filterButtons}>
+                    <button
+                        type="button"
+                        className={`${styles.filterButton} ${filtroTipo === "todos" ? styles.filterButtonActive : ""}`}
+                        onClick={() => setFiltroTipo("todos")}
+                    >
+                        Todos
+                    </button>
+                    <button
+                        type="button"
+                        className={`${styles.filterButton} ${filtroTipo === "solo" ? styles.filterButtonActive : ""}`}
+                        onClick={() => setFiltroTipo("solo")}
+                    >
+                        Músicos
+                    </button>
+                    <button
+                        type="button"
+                        className={`${styles.filterButton} ${filtroTipo === "banda" ? styles.filterButtonActive : ""}`}
+                        onClick={() => setFiltroTipo("banda")}
+                    >
+                        Bandas
+                    </button>
+                </div>
+            </section>
+
             <section className={`${styles.cardSection} ${fadeOut ? styles.fadeOut : ""}`}>
                 {renderUserCards()}
             </section>

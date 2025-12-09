@@ -6,7 +6,84 @@
     justify-content: center;
     align-content: center;
     padding: 25px;
+    margin-top: 10px;
+}
+
+.filterBar {
+    width: 100%;
+    max-width: 1225px;
+    margin: 0 auto;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 18px;
+    backdrop-filter: blur(6px);
     margin-top: 20px;
+
+}
+
+.filterEyebrow {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 13px;
+    color: #ff5823;
+    font-weight: 800;
+    font-family: "Poppins", sans-serif;
+}
+
+.filterTitle {
+    margin: 4px 0 0;
+    font-family: "Poppins", sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: #222;
+}
+
+.filterButtons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filterButton {
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 2px solid rgba(255, 86, 35, 0.548);
+    background: #fff;
+    color: #ff5823;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.filterButtonActive {
+    background: linear-gradient(90deg, #ff5823, #ff8850);
+    color: #fff;
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    transform: translateY(-1px) scale(1.04);
+    border: 2px solid rgba(255, 255, 255, 0.381);
+
+
+}
+
+.filterButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(255, 88, 35, 0.15);
 }
 
 .statusMessage,
@@ -113,6 +190,13 @@
     font-weight: 600;
     color: #212121;
     font-size: 15px;
+}
+
+.cardInfo .location {
+    margin-top: 4px;
+    font-weight: 600;
+    color: #444;
+    font-size: 14px;
 }
 
 .card button {
@@ -394,6 +478,11 @@
 }
 
 @media (max-width: 1024px) {
+    .filterBar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
     .cardSection {
         grid-template-columns: repeat(2, 1fr);
         justify-content: center;
@@ -411,6 +500,10 @@
 }
 
 @media (max-width: 600px) {
+    .filterBar {
+        padding: 16px;
+    }
+
     .cardSection {
         grid-template-columns: 1fr;
         justify-items: center;
