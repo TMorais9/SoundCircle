@@ -6,7 +6,7 @@ const NAV_ITEMS = [
     { label: "Pesquisar", icon: "search", to: "/search" },
     { label: "Conta", icon: "person", to: "/conta" },
     { label: "Mensagens", icon: "forum", to: "/messages" },
-    { label: "AI", icon: "network_intelligence", to: "/ai" },
+    { label: "AI Circle", icon: "network_intelligence", to: "/ai" },
 ];
 
 function Sidebar() {
