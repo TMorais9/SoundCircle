@@ -15,7 +15,6 @@ function Messages() {
     const [selectedChat, setSelectedChat] = useState(null);
     const [closingChat, setClosingChat] = useState(false);
     const [inputText, setInputText] = useState("");
-    const [fadeOutPage, setFadeOutPage] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [sending, setSending] = useState(false);
@@ -250,21 +249,9 @@ function Messages() {
         }, 350);
     };
 
-    const handleBackHome = () => {
-        setFadeOutPage(true);
-        setTimeout(() => navigate("/"), 400);
-    };
-
     return (
         <>
-            <main className={`${styles.messagesPage} ${fadeOutPage ? styles.fadeOutPage : ""}`}>
-                <button
-                    className={styles.backButton}
-                    onClick={handleBackHome}
-                    aria-label="Voltar à Home"
-                >
-                    <span className="material-symbols-outlined">arrow_back</span>
-                </button>
+            <main className={styles.messagesPage}>
 
                 <h1 className={styles.title}>Mensagens</h1>
 

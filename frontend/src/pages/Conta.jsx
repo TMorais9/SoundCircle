@@ -854,10 +854,6 @@ function Conta() {
     return (
         <>
             <main className={styles.infoPage}>
-                <button className={styles.backButton} onClick={() => navigate("/")}>
-                    <span className="material-symbols-outlined">arrow_back</span>
-                </button>
-
                 <div className={styles.profileContainer}>
                     <div className={styles.leftSection}>
                         <div className={styles.photoWrapper}>

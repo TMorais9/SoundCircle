@@ -41,7 +41,8 @@
     flex-direction: column;
     justify-content: space-between;
     padding: 20px;
-    height: 75vh;
+    gap: 16px;
+    min-height: 75vh;
     overflow: hidden;
 }
 
@@ -129,26 +130,134 @@
     box-shadow: 0 6px 16px rgba(255, 88, 35, 0.35);
 }
 
+.filtersPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.658);
+    border: 1px solid rgba(255, 88, 35, 0.08);
+    border-radius: 14px;
+    padding: 12px;
+}
+
+.filterRow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.filterField {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.filterField label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+}
+
+.filterField input {
+    border: 1px solid rgba(255, 88, 35, 0.15);
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #fff;
+    outline: none;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filterField input:focus {
+    border-color: rgba(255, 88, 35, 0.6);
+    box-shadow: 0 0 0 3px rgba(255, 88, 35, 0.15);
+}
+
+.traitsBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.traitsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: #444;
+}
+
+.traitsChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.traitChip {
+    border: 1px solid rgba(255, 88, 35, 0.25);
+    background: #fff;
+    color: #ff5823;
+    border-radius: 999px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.traitChipActive {
+    background: linear-gradient(90deg, #ff5823, #ff6e2b);
+    color: #fff;
+    border-color: rgba(255, 88, 35, 0.9);
+}
+
+.traitChip:hover {
+    transform: translateY(-1px);
+}
+
+.errorText {
+    color: #d64545;
+    font-size: 12px;
+}
+
 .aiInputArea {
     display: flex;
-    align-items: center;
-    margin-top: 20px;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
     background: rgba(255, 255, 255, 0.658);
     border-radius: 14px;
     border: 1px solid rgba(255, 88, 35, 0.15);
-    padding: 10px 15px;
+    padding: 12px;
 }
 
-.aiInputArea input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    outline: none;
+.filtersPanelInline {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.textAndButton {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.textAndButton input {
+    border: 1px solid rgba(255, 88, 35, 0.15);
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 14px;
     font-size: 15px;
-    color: #333;
+    outline: none;
 }
 
-.aiInputArea button {
+.textAndButton input:focus {
+    border-color: rgba(255, 88, 35, 0.6);
+    box-shadow: 0 0 0 3px rgba(255, 88, 35, 0.15);
+}
+
+.textAndButton button {
     background: linear-gradient(90deg, #ff5823, #ff6e2b);
     border: none;
     color: white;
@@ -163,39 +272,8 @@
     transition: transform 0.2s ease;
 }
 
-.aiInputArea button:hover {
+.textAndButton button:hover {
     transform: scale(1.1);
-}
-
-.backButton {
-    margin-left: 70px;
-    position: absolute;
-    align-self: flex-start;
-    background: rgba(255, 255, 255, 0.658);
-    border: none;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #ff5823;
-    font-size: 26px;
-    box-shadow:
-        0 20px 50px rgba(0, 0, 0, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.22);
-    transition: all 0.25s ease;
-    z-index: 1;
-}
-
-.backButton:hover {
-    background: #ff5823;
-    color: #fff;
-    transform: scale(1.05);
-    box-shadow:
-        0 20px 50px rgba(0, 0, 0, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 @media (max-width: 600px) {
@@ -203,13 +281,6 @@
         width: 95%;
         min-height: 65vh;
         padding: 15px;
-    }
-
-    .backButton {
-        margin: 10px 0 5px 12px;
-        width: 40px;
-        height: 40px;
-        font-size: 22px;
     }
 
     .title {

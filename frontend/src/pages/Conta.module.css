@@ -35,45 +35,14 @@
     padding: 30px 40px;
     width: 100%;
     max-width: 1200px;
-    background: rgba(255, 255, 255, 0.658);
-    border-radius: 25px;
-    border: 1px solid rgba(255, 88, 35, 0.15);
+    background: rgba(255, 255, 255, 0.239);
+    border: 1px solid rgba(255, 255, 255, 0.26);
     box-shadow:
         0 20px 50px rgba(0, 0, 0, 0.22),
         inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    border-radius: 25px;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-}
-
-.backButton {
-    margin-left: 70px;
-    position: absolute;
-    align-self: flex-start;
-    background: rgba(255, 255, 255, 0.658);
-    border: none;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #ff5823;
-    font-size: 26px;
-    box-shadow:
-        0 20px 50px rgba(0, 0, 0, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.22);
-    transition: all 0.25s ease;
-    z-index: 1;
-}
-
-.backButton:hover {
-    background: #ff5823;
-    box-shadow:
-        0 20px 50px rgba(0, 0, 0, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.22);
-    color: #fff;
-    transform: scale(1.05);
 }
 
 .photo {
@@ -155,33 +124,48 @@
 .name {
     font-size: 34px;
     font-weight: 700;
+    color: #000;
 }
 
 .basicInfo {
     font-size: 18px;
-    color: #555;
+    font-weight: 600;
+    color: #303030;
 }
 
 .experience {
     font-size: 16px;
-    color: #666;
+    font-weight: 600;
+    color: #303030;
 }
 
 .description {
-    margin-top: 25px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    font-family: poppins, sans-serif;
+    gap: 2px;
     border-radius: 15px;
     padding: 25px 30px;
     line-height: 1.7;
     text-align: justify;
     width: 100%;
-    flex: 1;
+    height: 100%;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.256);
 }
 
 .description h2 {
-    font-size: 22px;
+    font-size: 26px;
+    font-weight: 700;
+    color: #000;
+}
+
+.description p {
+    font-size: 16px;
     font-weight: 600;
-    color: #FF5823;
-    margin-bottom: 12px;
+    color: #303030;
+    margin-bottom: 2px;
 }
 
 .inputArea {
@@ -264,15 +248,11 @@
 }
 
 .editButtonArea {
-    margin-top: 20px;
-    text-align: right;
-}
-
-.editButtonArea {
-    margin-top: 20px;
+    margin-top: auto;
+    width: 100%;
     display: flex;
     justify-content: flex-end;
-    gap: 12px;
+    gap: 10px;
 }
 
 .editButton,
@@ -284,17 +264,24 @@
     font-size: 16px;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .editButton {
-    background: linear-gradient(90deg, #FF5823, #FF8850);
+    background: linear-gradient(90deg, #FF5823, #ff7434);
     color: #fff;
-    box-shadow: 0 4px 15px rgba(255, 88, 35, 0.25);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .editButton:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 18px rgba(255, 88, 35, 0.35);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .cancelButton {
@@ -310,7 +297,7 @@
 }
 
 .editButton.active {
-    background: linear-gradient(90deg, #ff6b3e, #ff9a66);
+    background: linear-gradient(90deg, #FF5823, #ff7434);
 }
 
 .traitsSection {
@@ -330,21 +317,20 @@
 }
 
 .traitCard {
-    height: 60px;
-    transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.658);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 88, 35, 0.15);
+    background: rgba(255, 255, 255, 0.239);
     box-shadow:
         0 20px 50px rgba(0, 0, 0, 0.22),
         inset 0 1px 0 rgba(255, 255, 255, 0.22);
-    padding: 0 15px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 88, 35, 0.15);
+    padding: 20px 12px;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    font-size: 15px;
-    font-weight: 600;
-    color: #333;
+    font-size: 18px;
+    font-weight: 800;
+    text-align: center;
+    color: #212121;
 }
 
 .removeButton {
@@ -364,7 +350,7 @@
     height: 60px;
     width: 60px;
     border-radius: 50%;
-    background: linear-gradient(90deg, #FF5823, #FF8850);
+    background: linear-gradient(90deg, #FF5823, #ff7434);
     border: none;
     cursor: pointer;
     color: #fff;
@@ -380,7 +366,10 @@
 
 .addButton:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(255, 88, 35, 0.35);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        0 6px 20px rgba(255, 88, 35, 0.35);
 }
 
 .addButtonActive {
@@ -448,7 +437,9 @@
 .signOutButton:hover {
     transform: scale(1.05);
     background: linear-gradient(90deg, #ff6b3e, #ff9a66);
-    box-shadow: 0 6px 20px rgba(255, 88, 35, 0.35);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .signOutButton span {

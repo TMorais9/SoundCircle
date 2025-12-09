@@ -87,6 +87,34 @@
     justify-content: center;
 }
 
+.backButton {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 12px;
+    min-height: 52px;
+    border-radius: 16px;
+    color: #212121;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    gap: 0;
+    margin-top: auto;
+}
+
+.sidebar:hover .backButton {
+    justify-content: flex-start;
+    padding-left: 12px;
+}
+
+.backButton:hover {
+    transform: translateX(2px);
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.14);
+}
+
 .navItem {
     width: 100%;
     display: flex;

@@ -12,7 +12,7 @@ const User = {
          u.descricao,
          u.foto_url,
          u.data_nascimento,
-         u.localizacao,
+          u.localizacao,
          MIN(ui.anos_experiencia) AS anos_experiencia,
          MIN(i.nome) AS instrumento_nome
        FROM User u
@@ -33,6 +33,30 @@ const User = {
 
   getByEmail: (email, callback) => {
     db.query('SELECT * FROM User WHERE email = ?', [email], callback);
+  },
+
+  getAllWithDetails: (callback) => {
+    db.query(
+      `SELECT
+         u.id,
+         u.nome,
+         u.email,
+         u.tipo,
+         u.sexo,
+         u.descricao,
+         u.foto_url,
+         u.data_nascimento,
+         u.localizacao,
+         GROUP_CONCAT(DISTINCT CONCAT_WS('::', i.nome, IFNULL(ui.anos_experiencia, ''), IFNULL(ui.nivel, '')) SEPARATOR '||') AS instrumentos_raw,
+         GROUP_CONCAT(DISTINCT c.nome ORDER BY c.nome SEPARATOR '||') AS caracteristicas_raw
+       FROM User u
+       LEFT JOIN User_inst ui ON ui.user_id = u.id
+       LEFT JOIN Instrumento i ON i.id = ui.instrumento_id
+       LEFT JOIN UserCar uc ON uc.user_id = u.id
+       LEFT JOIN Caracteristica c ON c.id = uc.caracteristica_id
+       GROUP BY u.id, u.nome, u.email, u.tipo, u.sexo, u.descricao, u.foto_url, u.data_nascimento, u.localizacao`,
+      callback
+    );
   },
 
   create: (data, callback) => {

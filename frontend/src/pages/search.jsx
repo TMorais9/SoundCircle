@@ -152,7 +152,7 @@ function Search() {
                     <div className={styles.searchModalHeader}>
                         <div>
                             <p className={styles.searchEyebrow}>Descobre músicos</p>
-                            <h1 className={styles.searchTitle}>Pesquisa rápida pelo nome</h1>
+                            <h1 className={styles.searchTitle}>Pesquisa rápida</h1>
                         </div>
                         <button
                             className={styles.searchClose}
@@ -168,7 +168,7 @@ function Search() {
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Pesquise pelo nome do músico"
+                            placeholder="Pesquisar..."
                             aria-label="Pesquisar músico pelo nome"
                         />
                         {searchTerm ? (

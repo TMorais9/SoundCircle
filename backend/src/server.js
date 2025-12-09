@@ -15,6 +15,7 @@ const mensagemRoutes = require('./routes/mensagemRoutes');
 const caracteristicaRoutes = require('./routes/caracteristicaRoutes');
 const usercarRoutes = require('./routes/usercarRoutes');
 const userphotoRoutes = require('./routes/userphotoRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
@@ -36,6 +37,7 @@ app.use('/mensagens', mensagemRoutes);
 app.use('/caracteristicas', caracteristicaRoutes);
 app.use('/usercar', usercarRoutes);
 app.use('/users', userphotoRoutes);
+app.use('/ai', aiRoutes);
 
 app.listen(config.port, () => {
   console.log(`Servidor a correr em http://localhost:${config.port}`);

@@ -168,7 +168,6 @@ function Info() {
     const { id } = useParams();
     const authUser = useAuthUser();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [fadeOut, setFadeOut] = useState(false);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -208,13 +207,6 @@ function Info() {
         };
     }, [targetUserId]);
 
-    const handleBack = () => {
-        setFadeOut(true);
-        setTimeout(() => {
-            navigate("/");
-        }, 500);
-    };
-
     const traits = profile?.caracteristicas?.length
         ? profile.caracteristicas
         : [];
@@ -233,13 +225,7 @@ function Info() {
 
     return (
         <>
-            <main className={`${styles.infoPage} ${fadeOut ? styles.fadeOut : ""}`}>
-                <button
-                    className={styles.backButton}
-                    onClick={handleBack}
-                    aria-label="Voltar à Home">
-                    <span className="material-symbols-outlined">arrow_back</span>
-                </button>
+            <main className={styles.infoPage}>
 
                 {loading ? (
                     <p className={styles.statusMessage}>A carregar perfil...</p>
