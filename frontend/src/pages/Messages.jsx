@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, Fragment } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import useAuthUser from "react-auth-kit/hooks/useAuthUser";
 import styles from "./messages.module.css";
@@ -10,15 +10,18 @@ function Messages() {
     const location = useLocation();
     const authUser = useAuthUser();
     const chatEndRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     const [conversations, setConversations] = useState([]);
     const [selectedChat, setSelectedChat] = useState(null);
-    const [closingChat, setClosingChat] = useState(false);
     const [inputText, setInputText] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [sending, setSending] = useState(false);
     const [pendingTarget, setPendingTarget] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState("");
+    const [lightboxMedia, setLightboxMedia] = useState(null);
 
     const currentUserId = useMemo(() => {
         const localId = typeof window !== "undefined" ? window.localStorage.getItem("userId") : null;
@@ -62,6 +65,29 @@ function Messages() {
         return value;
     };
 
+    const resolveMediaUrl = (value) => {
+        if (!value) return null;
+        if (value.startsWith("http") || value.startsWith("blob:") || value.startsWith("data:")) return value;
+        if (value.startsWith("/")) return `${API_BASE_URL}${value}`;
+        return `${API_BASE_URL}/${value}`;
+    };
+
+    const detectMediaType = (path) => {
+        if (!path) return null;
+        const lower = path.toLowerCase();
+        if (lower.match(/\.(mp4|mov|webm|ogg|avi|mkv)$/)) return "video";
+        if (lower.match(/\.(jpg|jpeg|png|gif|bmp|webp|svg)$/)) return "imagem";
+        return null;
+    };
+
+    const getMessagePreview = (msg) => {
+        const tipo = msg.media_tipo || msg.mediaTipo;
+        if (msg.conteudo || msg.texto) return msg.conteudo || msg.texto;
+        if (tipo === "imagem") return "📷 Imagem";
+        if (tipo === "video") return "🎥 Vídeo";
+        return "Mensagem";
+    };
+
     const buildConversations = (messages, usersMap) => {
         const convMap = {};
         const myId = Number(currentUserId);
@@ -85,11 +111,13 @@ function Messages() {
                 remetenteId: msg.remetente_id,
                 remetente: msg.remetente_id === myId ? "Tu" : convMap[otherId].nome,
                 texto: msg.conteudo,
+                mediaPath: resolveMediaUrl(msg.media_path),
+                mediaTipo: msg.media_tipo || detectMediaType(msg.media_path),
                 hora,
                 data,
                 timestamp: msg.data_envio,
             });
-            convMap[otherId].ultimaMensagem = msg.conteudo;
+            convMap[otherId].ultimaMensagem = getMessagePreview(msg);
             convMap[otherId].hora = data === "Hoje" ? hora : data;
         });
 
@@ -176,18 +204,36 @@ function Messages() {
         }
     }, [selectedChat]);
 
+    const clearSelectedFile = () => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setSelectedFile(null);
+        setPreviewUrl("");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
     const handleSend = async () => {
-        if (!inputText.trim() || !selectedChat || !currentUserId) return;
+        if (!selectedChat || !currentUserId || sending) return;
         const texto = inputText.trim();
+        if (!texto && !selectedFile) return;
         const now = new Date();
-        const { hora, data } = formatTimestamp(now.toISOString());
+        const timestamp = now.toISOString();
+        const { hora, data } = formatTimestamp(timestamp);
+        const localId = `temp-${timestamp}`;
         const outgoing = {
+            localId,
             remetenteId: Number(currentUserId),
             remetente: "Tu",
             texto,
+            mediaPath: selectedFile ? previewUrl : null,
+            mediaTipo: selectedFile
+                ? selectedFile.type.startsWith("video/")
+                    ? "video"
+                    : "imagem"
+                : null,
             hora,
             data,
-            timestamp: now.toISOString(),
+            timestamp,
+            pending: !!selectedFile,
         };
 
         setInputText("");
@@ -197,7 +243,7 @@ function Messages() {
                 ? {
                       ...prev,
                       chat: [...prev.chat, outgoing],
-                      ultimaMensagem: texto,
+                      ultimaMensagem: getMessagePreview(outgoing),
                       hora: data === "Hoje" ? hora : data,
                   }
                 : prev
@@ -209,7 +255,7 @@ function Messages() {
                         ? {
                               ...conv,
                               chat: [...conv.chat, outgoing],
-                              ultimaMensagem: texto,
+                              ultimaMensagem: getMessagePreview(outgoing),
                               hora: data === "Hoje" ? hora : data,
                           }
                         : conv
@@ -219,15 +265,75 @@ function Messages() {
         setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
         try {
-            await MessagesAPI.send({
-                remetente_id: Number(currentUserId),
-                destinatario_id: selectedChat.userId,
-                conteudo: texto,
-            });
+            if (selectedFile) {
+                const formData = new FormData();
+                formData.append("remetente_id", Number(currentUserId));
+                formData.append("destinatario_id", selectedChat.userId);
+                if (texto) formData.append("conteudo", texto);
+                formData.append("media", selectedFile);
+
+                const response = await MessagesAPI.sendMedia(formData);
+                const confirmedPath = resolveMediaUrl(response?.media_path);
+                const confirmedTipo = response?.media_tipo || outgoing.mediaTipo || detectMediaType(response?.media_path);
+
+                const applyServerMedia = (chatList) =>
+                    chatList.map((msg) =>
+                        msg.localId === localId
+                            ? { ...msg, mediaPath: confirmedPath || msg.mediaPath, mediaTipo: confirmedTipo, pending: false }
+                            : msg
+                    );
+
+                setSelectedChat((prev) =>
+                    prev
+                        ? {
+                              ...prev,
+                              chat: applyServerMedia(prev.chat),
+                              ultimaMensagem: getMessagePreview({ ...outgoing, mediaTipo: confirmedTipo }),
+                          }
+                        : prev
+                );
+                setConversations((prev) =>
+                    sortConversations(
+                        prev.map((conv) =>
+                            conv.userId === selectedChat.userId
+                                ? {
+                                      ...conv,
+                                      chat: applyServerMedia(conv.chat),
+                                      ultimaMensagem: getMessagePreview({ ...outgoing, mediaTipo: confirmedTipo }),
+                                  }
+                                : conv
+                        )
+                    )
+                );
+            } else {
+                await MessagesAPI.send({
+                    remetente_id: Number(currentUserId),
+                    destinatario_id: selectedChat.userId,
+                    conteudo: texto,
+                });
+            }
         } catch (err) {
             setError(err.message || "Não foi possível enviar a mensagem");
+            setSelectedChat((prev) =>
+                prev
+                    ? {
+                          ...prev,
+                          chat: prev.chat.filter((msg) => msg.localId !== localId),
+                      }
+                    : prev
+            );
+            setConversations((prev) =>
+                sortConversations(
+                    prev.map((conv) =>
+                        conv.userId === selectedChat.userId
+                            ? { ...conv, chat: conv.chat.filter((msg) => msg.localId !== localId) }
+                            : conv
+                    )
+                )
+            );
         } finally {
             setSending(false);
+            clearSelectedFile();
         }
     };
 
@@ -242,89 +348,188 @@ function Messages() {
     };
 
     const handleCloseChat = () => {
-        setClosingChat(true);
-        setTimeout(() => {
-            setSelectedChat(null);
-            setClosingChat(false);
-            setInputText("");
-        }, 350);
+        setSelectedChat(null);
+        setInputText("");
+        clearSelectedFile();
     };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+            setError("Apenas imagens ou vídeos são suportados.");
+            return;
+        }
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setSelectedFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
+        setError("");
+    };
+
+    const renderChatMessages = () => {
+        let lastDate = null;
+        return selectedChat.chat.map((msg, i) => {
+            const dateLabel = msg.data || formatTimestamp(msg.timestamp).data;
+            const showDivider = dateLabel !== lastDate;
+            if (showDivider) lastDate = dateLabel;
+
+            return (
+                <Fragment key={`${msg.timestamp || i}-${i}`}>
+                    {showDivider && (
+                        <div className={styles.dateDivider}>
+                            <span>{dateLabel}</span>
+                        </div>
+                    )}
+                    <div
+                        className={`${styles.chatMessage} ${msg.remetente === "Tu" ? styles.sent : styles.received
+                            }`}
+                    >
+                        {msg.mediaPath && (
+                            <button
+                                type="button"
+                                className={styles.chatMedia}
+                                onClick={() => openLightbox(msg.mediaPath, msg.mediaTipo)}
+                            >
+                                {msg.mediaTipo === "video" ? (
+                                    <video src={msg.mediaPath} controls preload="metadata" />
+                                ) : (
+                                    <img src={msg.mediaPath} alt="Anexo" />
+                                )}
+                            </button>
+                        )}
+                        {msg.texto && <p className={msg.mediaPath ? styles.textAfterMedia : ""}>{msg.texto}</p>}
+                        <span>{msg.hora}</span>
+                    </div>
+                </Fragment>
+            );
+        });
+    };
+
+    const openLightbox = (src, tipo) => {
+        if (!src) return;
+        setLightboxMedia({ src, tipo });
+    };
+
+    const closeLightbox = () => setLightboxMedia(null);
 
     return (
         <>
             <main className={styles.messagesPage}>
+                <div className={styles.messagesContainer}>
+                    <h1 className={styles.title}>Mensagens</h1>
 
-                <h1 className={styles.title}>Mensagens</h1>
-
-                <section className={styles.messagesList}>
-                    {loading ? (
-                        <p className={styles.statusMessage}>A carregar conversas...</p>
-                    ) : error ? (
-                        <p className={styles.errorMessage}>{error}</p>
-                    ) : conversations.length ? (
-                        conversations.map((conv) => (
-                            <div
-                                key={conv.userId}
-                                className={styles.messageCard}
-                                onClick={() => openConversation(conv)}
-                            >
-                                <div className={styles.profilePic}>
-                                    <img src={conv.foto} alt={conv.nome} />
-                                </div>
-                                <div className={styles.messageInfo}>
-                                    <h2>{conv.nome}</h2>
-                                    <p>{conv.ultimaMensagem || "Ainda sem mensagens"}</p>
-                                </div>
-                                <span className={styles.time}>{conv.hora || ""}</span>
-                            </div>
-                        ))
-                    ) : (
-                        <p className={styles.statusMessage}>
-                            Ainda não tens mensagens. Envia a primeira para começar uma conversa!
-                        </p>
+                    {!selectedChat && (
+                        <section className={styles.messagesList}>
+                            {loading ? (
+                                <p className={styles.statusMessage}>A carregar conversas...</p>
+                            ) : error ? (
+                                <p className={styles.errorMessage}>{error}</p>
+                            ) : conversations.length ? (
+                                conversations.map((conv) => (
+                                    <div
+                                        key={conv.userId}
+                                        className={styles.messageCard}
+                                        onClick={() => openConversation(conv)}
+                                    >
+                                        <div className={styles.profilePic}>
+                                            <img src={conv.foto} alt={conv.nome} />
+                                        </div>
+                                        <div className={styles.messageInfo}>
+                                            <h2>{conv.nome}</h2>
+                                            <p>{conv.ultimaMensagem || "Ainda sem mensagens"}</p>
+                                        </div>
+                                        <span className={styles.time}>{conv.hora || ""}</span>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className={styles.statusMessage}>
+                                    Ainda não tens mensagens. Envia a primeira para começar uma conversa!
+                                </p>
+                            )}
+                        </section>
                     )}
-                </section>
-            </main>
 
-            {selectedChat && (
-                <div className={`${styles.chatModalOverlay} ${closingChat ? styles.fadeOut : ""}`}>
-                    <div className={styles.chatModal} onClick={(e) => e.stopPropagation()}>
-                        <div className={styles.chatHeader}>
-                            <img src={selectedChat.foto} alt={selectedChat.nome} />
-                            <h2>{selectedChat.nome}</h2>
-                            <button className={styles.closeChat} onClick={handleCloseChat}>
-                                ✕
-                            </button>
-                        </div>
+                    {selectedChat && (
+                        <div className={styles.chatPanel}>
+                            <div className={styles.chatHeader}>
+                                <button className={styles.backButton} onClick={handleCloseChat} aria-label="Voltar">
+                                    <span className="material-symbols-outlined">arrow_back</span>
+                                </button>
+                                <img src={selectedChat.foto} alt={selectedChat.nome} />
+                                <h2>{selectedChat.nome}</h2>
+                            </div>
 
                             <div className={styles.chatBody}>
-                                {selectedChat.chat.map((msg, i) => (
-                                    <div
-                                        key={i}
-                                        className={`${styles.chatMessage} ${msg.remetente === "Tu" ? styles.sent : styles.received
-                                            }`}
-                                    >
-                                        <p>{msg.texto}</p>
-                                        <span>{msg.hora}</span>
-                                    </div>
-                                ))}
+                                {renderChatMessages()}
 
                                 <div ref={chatEndRef} />
                             </div>
 
+                            {selectedFile && (
+                                <div className={styles.mediaPreview}>
+                                    <div className={styles.mediaThumb}>
+                                        {previewUrl && selectedFile.type.startsWith("video/") ? (
+                                            <video src={previewUrl} muted playsInline />
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                className={styles.previewButton}
+                                                onClick={() => openLightbox(previewUrl, "imagem")}
+                                            >
+                                                <img src={previewUrl || "https://via.placeholder.com/80"} alt="Pré-visualização" />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className={styles.mediaInfo}>
+                                        <p>{selectedFile.name}</p>
+                                        <button onClick={clearSelectedFile}>Remover</button>
+                                    </div>
+                                </div>
+                            )}
 
-                        <div className={styles.chatInputArea}>
-                            <input
-                                type="text"
-                                placeholder="Escreve uma mensagem..."
-                                value={inputText}
-                                onChange={(e) => setInputText(e.target.value)}
-                                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                            />
-                            <button onClick={handleSend} disabled={sending}>
-                                <span className="material-symbols-outlined">send</span>
-                            </button>
+                            <div className={styles.chatInputArea}>
+                                <input
+                                    type="file"
+                                    accept="image/*,video/*"
+                                    ref={fileInputRef}
+                                    className={styles.hiddenFileInput}
+                                    onChange={handleFileChange}
+                                />
+                                <button
+                                    className={styles.attachButton}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={sending}
+                                    title="Anexar foto ou vídeo"
+                                >
+                                    <span className="material-symbols-outlined">attach_file</span>
+                                </button>
+                                <input
+                                    type="text"
+                                    placeholder="Escreve uma mensagem..."
+                                    value={inputText}
+                                    onChange={(e) => setInputText(e.target.value)}
+                                    onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                                />
+                                <button className={styles.sendButton} onClick={handleSend} disabled={sending}>
+                                    <span className="material-symbols-outlined">send</span>
+                                </button>
+                            </div>
                         </div>
+                    )}
+                </div>
+            </main>
+
+            {lightboxMedia && (
+                <div className={styles.lightboxOverlay} onClick={closeLightbox}>
+                    <div className={styles.lightboxContent} onClick={(e) => e.stopPropagation()}>
+                        <button className={styles.lightboxClose} onClick={closeLightbox} aria-label="Fechar">
+                            ✕
+                        </button>
+                        {lightboxMedia.tipo === "video" ? (
+                            <video src={lightboxMedia.src} controls autoPlay />
+                        ) : (
+                            <img src={lightboxMedia.src} alt="Visualização ampliada" />
+                        )}
                     </div>
                 </div>
             )}

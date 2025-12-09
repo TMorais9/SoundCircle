@@ -31,6 +31,7 @@ const MessagesAPI = {
     listByUser: (userId) => request(`/mensagens/user/${userId}`),
     getConversation: (a, b) => request(`/mensagens/${a}/${b}`),
     send: (payload) => request(`/mensagens`, { method: "POST", body: payload }),
+    sendMedia: (formData) => request(`/mensagens/media`, { method: "POST", body: formData }),
     delete: (id) => request(`/mensagens/${id}`, { method: "DELETE" }),
 };
 

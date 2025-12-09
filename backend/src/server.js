@@ -25,10 +25,15 @@ app.use(cors({
 app.use(express.json());
 
 const uploadsDir = path.join(__dirname, 'uploads');
+const msgUploadsDir = path.join(__dirname, 'uploads_mensagens');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
+if (!fs.existsSync(msgUploadsDir)) {
+  fs.mkdirSync(msgUploadsDir, { recursive: true });
+}
 app.use('/uploads', express.static(uploadsDir));
+app.use('/uploads_mensagens', express.static(msgUploadsDir));
 
 app.use('/users', userRoutes);
 app.use('/instrumentos', instrumentoRoutes);
