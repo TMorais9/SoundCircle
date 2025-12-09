@@ -4,7 +4,7 @@ const mysql = require('mysql2');
 const {
   DB_PORT = 3306,
   DB_USER = 'root',
-  DB_PASSWORD = 'Mcmadias04',
+  DB_PASSWORD = 'Benfica1904',
   DB_NAME = 'SoundCircle',
 } = process.env;
 
