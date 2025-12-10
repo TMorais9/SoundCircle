@@ -97,19 +97,19 @@ function Home() {
 
     const paginas = [
         {
-            titulo: "Bem-vindo ao SoundCircle 🎵",
+            titulo: "Bem-vindo ao SoundCircle!",
             texto:
                 "Liga-te a outros músicos, descobre novos estilos e colabora em projetos criativos. O SoundCircle é o teu espaço para expandir a tua rede musical e encontrar oportunidades únicas.",
             imagem: "/banner.png",
         },
         {
-            titulo: "Explora Músicos e Perfis 👥",
+            titulo: "Explora Prefis de Músicos e de BAndas",
             texto:
-                "Na página inicial, encontras músicos recomendados com base no teu perfil. Clica em 'Ver Perfil' para conhecer mais sobre o artista, o instrumento que toca e o seu estilo musical.",
+                "Na página inicial, encontras músicos recomendados com base no teu perfil. Clica em 'Ver Perfil' para conhecer mais sobre o artista, o instrumento que toca e o seu estilo musical. Podes tambêm conhecer projetos de bandas!",
             imagem: "/teste1.png",
         },
         {
-            titulo: "Perfil e Características 🎸",
+            titulo: "Perfil e Características",
             texto:
                 "Cada músico tem um espaço personalizado com a sua história, talentos e características únicas. Essas tags ajudam-te a encontrar pessoas com quem tenhas mais afinidade musical.",
             imagem: "/teste2.png",
@@ -117,13 +117,13 @@ function Home() {
         {
             titulo: "Mensagens e Colaboração 💬",
             texto:
-                "Usa o chat integrado para conversar, planear ensaios ou partilhar ideias criativas. Podes trocar mensagens diretamente com outros artistas e fortalecer a tua rede de contactos.",
+                "Usa o chat integrado para conversar, planear ensaios ou partilhar ideias criativas. Podes trocar mensagens diretamente com outros artistas ou bandas e fortalecer a tua rede de contactos.",
             imagem: "/teste3.png",
         },
         {
-            titulo: "A tua IA Musical 🤖",
+            titulo: "Circle AI",
             texto:
-                "O SoundCircle inclui uma assistente virtual inteligente que aprende com as tuas características musicais. Ela sugere músicos compatíveis, ideias criativas e até colaborações ideais!",
+                "O SoundCircle inclui uma assistente virtual inteligente que sugere musicos com base nas características que procures. Experimenta e descobre novas conexões musicais!",
             imagem: "/teste4.png",
         },
     ];

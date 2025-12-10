@@ -87,7 +87,7 @@ const runPythonMatcher = (musicos, preferencias) =>
       JSON.stringify({
         musicos,
         preferencias,
-        max_resultados: 5,
+        max_resultados: 10,
       })
     );
     child.stdin.end();
@@ -112,7 +112,52 @@ exports.match = async (req, res) => {
     };
 
     const resultados = await runPythonMatcher(musicos, preferencias);
-    return res.json({ matches: resultados });
+
+    const onlyInstrument =
+      !!preferencias.instrumento &&
+      preferencias.anos_experiencia == null &&
+      !preferencias.localizacao &&
+      (!preferencias.caracteristicas || preferencias.caracteristicas.length === 0);
+
+    const filtrados = onlyInstrument
+      ? resultados.filter(
+          (r) => r.instrumento_match === true
+        )
+      : resultados;
+
+    const normalizados = filtrados.map((r) => {
+      if (onlyInstrument && r.instrumento_match === true) {
+        return { ...r, exato: true };
+      }
+      return r;
+    });
+
+    const exatos = normalizados.filter((r) => r.exato);
+
+    const similares = normalizados
+      .filter((r) => !exatos.includes(r))
+      .filter((r) => {
+        const instOk =
+          !preferencias.instrumento ||
+          r.instrumento_match === true ||
+          (r.instrumento_score ?? 0) >= 0.7;
+        const anosOk =
+          preferencias.anos_experiencia == null ||
+          r.anos_diff == null ||
+          Number(r.anos_diff) <= 2;
+        const locOk =
+          !preferencias.localizacao || (r.localizacao_ratio ?? 0) >= 0.7;
+        return instOk && anosOk && locOk;
+      })
+      .slice(0, 5);
+
+    const matches = [...exatos, ...similares];
+
+    return res.json({
+      matches,
+      exactCount: exatos.length,
+      similarCount: similares.length,
+    });
   } catch (err) {
     console.error('Erro no matcher AI:', err.message);
     return res.status(500).json({ error: 'Não foi possível gerar sugestões com o motor AI', detail: err.message });

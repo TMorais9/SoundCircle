@@ -79,37 +79,61 @@ function Ai() {
         };
     };
 
-    const formatResponse = (matches, prefs) => {
-        if (!matches.length) {
-            return "Não encontrei ninguém com esses filtros. Tenta relaxar algum critério ou escolher menos características.";
-        }
-        const temExato = matches.some((m) => m.exato === true);
-        const soAproximado = matches.length > 0 && !temExato;
+    const formatResponse = (matches, prefs, counts = {}) => {
+        const exactCount = counts.exactCount ?? matches.filter((m) => m.exato).length;
+        const similarCount = counts.similarCount ?? Math.max(0, matches.length - exactCount);
         const introParts = [];
         if (prefs.instrumento) introParts.push(`instrumento ${prefs.instrumento}`);
         if (prefs.anosExperiencia) introParts.push(`${prefs.anosExperiencia} anos de experiência`);
         if (prefs.localizacao) introParts.push(`perto de ${prefs.localizacao}`);
         if (prefs.caracteristicas?.length) introParts.push(`características: ${prefs.caracteristicas.join(", ")}`);
-        const baseIntro =
+
+        const baseContext =
             introParts.length > 0
-                ? `Encontrei ${matches.length} músicos com ${introParts.join(" · ")}:`
-                : `Encontrei ${matches.length} músicos compatíveis:`;
+                ? `para ${introParts.join(" · ")}`
+                : "para o teu pedido";
 
-        const intro = soAproximado
-            ? `Não encontrei exatamente o que pediste, mas tenho sugestões próximas:\n${baseIntro}`
-            : baseIntro;
+        let intro = "";
+        if (!matches.length) {
+            intro = `Não encontrei exatamente o que pediste, mas estas pessoas são as mais próximas ${baseContext}.`;
+        } else if (exactCount > 0) {
+            intro = `Encontrei ${exactCount} perfis que cumprem exatamente o que pediste ${baseContext}.`;
+            if (similarCount > 0) {
+                intro += ` Também tenho ${similarCount} perfis semelhantes que podem encaixar.`;
+            }
+        } else {
+            intro = `Não encontrei tudo exatamente, mas estas sugestões são as mais próximas ${baseContext}.`;
+        }
 
-        const bullets = matches
-            .map((m) => {
-                const role =
-                    m.instrumentos?.[0]?.nome ||
-                    (m.instrumentos?.length ? m.instrumentos[0].nome : "instrumento não definido");
-                const anos = m.instrumentos?.[0]?.anos_experiencia;
-                return `• ${m.nome} (${role}${anos ? ` · ${anos} anos` : ""})`;
-            })
-            .join("\n");
+        const listItems = matches.map((m) => {
+            const role =
+                m.instrumento_escolhido ||
+                m.instrumentos?.[0]?.nome ||
+                (m.instrumentos?.length ? m.instrumentos[0].nome : "instrumento não definido");
+            const anos =
+                m.instrumento_anos ??
+                m.instrumentos?.[0]?.anos_experiencia;
+            const anosTxt = anos || anos === 0 ? `${anos} anos` : "anos n/d";
+            const modo = m.exato ? "exato" : "semelhante";
 
-        return `${intro}\n${bullets}\nEscolhe um músico abaixo para ver o perfil.`;
+            const roleNorm = role?.toLowerCase() || "";
+            const isBanda = roleNorm.includes("banda");
+            const displayRole = isBanda ? "Banda" : role || "instrumento n/d";
+
+            const metaParts = [];
+            if (displayRole) metaParts.push(displayRole);
+            if (anosTxt) metaParts.push(anosTxt);
+            if (!isBanda && m.localizacao) metaParts.push(m.localizacao);
+
+            return {
+                id: m.id,
+                nome: m.nome,
+                metaParts,
+                modo,
+            };
+        });
+
+        return { intro, listItems };
     };
 
     const handleSend = (e) => {
@@ -135,9 +159,15 @@ function Ai() {
                     userId: prefs.userId,
                 });
                 const matches = data?.matches || [];
+                const counts = {
+                    exactCount: data?.exactCount ?? matches.filter((m) => m.exato).length,
+                    similarCount: data?.similarCount ?? 0,
+                };
+                const formatted = formatResponse(matches, prefs, counts);
                 const respostaAI = {
                     remetente: "ai",
-                    texto: formatResponse(matches, prefs),
+                    texto: formatted.intro,
+                    listItems: formatted.listItems,
                     matches: matches.map((m) => ({ id: m.id, nome: m.nome })),
                 };
                 setMessages((prev) => [...prev, respostaAI]);
@@ -146,6 +176,7 @@ function Ai() {
                     remetente: "ai",
                     texto: error.message || "Não consegui gerar sugestões agora. Tenta mais tarde.",
                     matches: [],
+                    listItems: [],
                 };
                 setMessages((prev) => [...prev, respostaAI]);
             } finally {
@@ -172,17 +203,25 @@ function Ai() {
                                 }
                             >
                                 <p>{msg.texto}</p>
-                                {msg.matches && msg.matches.length > 0 && (
-                                    <div className={styles.aiMatches}>
-                                        {msg.matches.map((match) => (
-                                            <button
-                                                key={match.id}
-                                                onClick={() => navigate(`/info/${match.id}`)}
-                                            >
-                                                Ver {match.nome}
-                                            </button>
+                                {msg.listItems && msg.listItems.length > 0 && (
+                                    <ul className={styles.matchesList}>
+                                        {msg.listItems.map((item) => (
+                                            <li key={item.id} className={styles.matchItem}>
+                                                <div className={styles.matchLine}>
+                                                    <span className={styles.matchName}>{item.nome}</span>
+                                                    <span className={styles.matchTag}>{item.modo}</span>
+                                                </div>
+                                                <div className={styles.matchMeta}>
+                                                    {item.metaParts?.map((part, idx) => (
+                                                        <span key={idx}>{part}</span>
+                                                    ))}
+                                                </div>
+                                                <button onClick={() => navigate(`/info/${item.id}`)}>
+                                                    Ver perfil
+                                                </button>
+                                            </li>
                                         ))}
-                                    </div>
+                                    </ul>
                                 )}
                             </div>
                         ))}
