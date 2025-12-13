@@ -93,6 +93,40 @@ const runPythonMatcher = (musicos, preferencias) =>
     child.stdin.end();
   });
 
+const instrumentSynonyms = {
+  voz: ['vocalista', 'vocal', 'cantor', 'cantora', 'canto', 'vozes', 'voz principal', 'backing vocals', 'vocals', 'singer'],
+  guitarra: ['guitarrista', 'guitarra eletrica', 'guitarra elétrica', 'guitarra acustica', 'guitarra acústica', 'guitarra classica', 'violao', 'electric guitar', 'acoustic guitar', 'guitar'],
+  baixo: ['baixista', 'contrabaixo', 'baixo eletrico', 'baixo elétrico', 'bass', 'bass guitar'],
+  bateria: ['baterista', 'drums', 'percussao', 'percussão', 'kit', 'percussion', 'drummer'],
+  teclado: ['piano', 'pianista', 'sintetizador', 'synth', 'keyboard', 'keys'],
+};
+
+const normalizeText = (value) => {
+  if (!value) return '';
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[-_]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+const canonicalizeInstrument = (raw) => {
+  const norm = normalizeText(raw);
+  if (!norm) return null;
+  for (const [canon, synonyms] of Object.entries(instrumentSynonyms)) {
+    const all = [canon, ...synonyms];
+    for (const entry of all) {
+      const entryNorm = normalizeText(entry);
+      if (entryNorm === norm) return canon;
+      if (entryNorm.length >= 3 && norm.includes(entryNorm)) return canon;
+      if (norm.length >= 3 && entryNorm.includes(norm)) return canon;
+    }
+  }
+  return raw.trim();
+};
+
 exports.match = async (req, res) => {
   const { instrumento, anosExperiencia, localizacao, caracteristicas, userId } = req.body || {};
 
@@ -105,7 +139,7 @@ exports.match = async (req, res) => {
     }
 
     const preferencias = {
-      instrumento: instrumento || null,
+      instrumento: canonicalizeInstrument(instrumento || null),
       anos_experiencia: Number.isFinite(Number(anosExperiencia)) ? Number(anosExperiencia) : null,
       localizacao: localizacao || null,
       caracteristicas: Array.isArray(caracteristicas) ? caracteristicas : [],
@@ -126,10 +160,47 @@ exports.match = async (req, res) => {
       : resultados;
 
     const normalizados = filtrados.map((r) => {
-      if (onlyInstrument && r.instrumento_match === true) {
-        return { ...r, exato: true };
+      // Exato só quando: instrumento casa e anos/localização cumprem regras estritas
+      const instOk =
+        !preferencias.instrumento ||
+        r.instrumento_match === true ||
+        (r.instrumento_score ?? 0) >= 0.75;
+
+      const anosStrict =
+        preferencias.anos_experiencia == null ||
+        (r.anos_diff != null && Number(r.anos_diff) <= 1) ||
+        (r.instrumento_anos != null &&
+          r.instrumento_anos >= preferencias.anos_experiencia &&
+          Math.abs(r.instrumento_anos - preferencias.anos_experiencia) <= 1);
+
+      const anosRelax =
+        preferencias.anos_experiencia == null ||
+        r.anos_diff == null ||
+        Number(r.anos_diff) <= 2 ||
+        (r.instrumento_anos != null && r.instrumento_anos >= preferencias.anos_experiencia);
+
+      const locStrict =
+        !preferencias.localizacao ||
+        (r.localizacao_ratio ?? 0) >= 0.85;
+
+      const locRelax =
+        !preferencias.localizacao ||
+        (r.localizacao_ratio ?? 0) >= 0.7;
+
+      const shouldBeExact =
+        (onlyInstrument && instOk) ||
+        (instOk && anosStrict && locStrict);
+
+      if (shouldBeExact) {
+        return { ...r, exato: true, instrumento_match: true };
       }
-      return r;
+
+      return {
+        ...r,
+        _instOk: instOk,
+        _anosRelax: anosRelax,
+        _locRelax: locRelax,
+      };
     });
 
     const exatos = normalizados.filter((r) => r.exato);
@@ -137,26 +208,44 @@ exports.match = async (req, res) => {
     const similares = normalizados
       .filter((r) => !exatos.includes(r))
       .filter((r) => {
-        const instOk =
-          !preferencias.instrumento ||
-          r.instrumento_match === true ||
-          (r.instrumento_score ?? 0) >= 0.7;
+        const instOk = r._instOk ?? (!preferencias.instrumento || r.instrumento_match === true || (r.instrumento_score ?? 0) >= 0.75);
         const anosOk =
+          (r._anosRelax ?? false) ||
           preferencias.anos_experiencia == null ||
           r.anos_diff == null ||
-          Number(r.anos_diff) <= 2;
+          Number(r.anos_diff) <= 2 ||
+          (r.instrumento_anos != null && r.instrumento_anos >= preferencias.anos_experiencia);
         const locOk =
-          !preferencias.localizacao || (r.localizacao_ratio ?? 0) >= 0.7;
+          (r._locRelax ?? false) ||
+          !preferencias.localizacao ||
+          (r.localizacao_ratio ?? 0) >= 0.7;
         return instOk && anosOk && locOk;
       })
       .slice(0, 5);
 
-    const matches = [...exatos, ...similares];
+    let matches = [...exatos, ...similares];
+
+    // Para pedidos só de instrumento, consideramos todos os matches como exatos
+    if (onlyInstrument && matches.length > 0) {
+      matches = matches.map((m) => ({
+        ...m,
+        instrumento_match: true,
+        exato: true,
+      }));
+    }
+
+    if (preferencias.instrumento && matches.length === 0) {
+      const nomeInstrumento = preferencias.instrumento.trim();
+      return res.status(200).json({
+        matches: [],
+        message: `Não existem pessoas a tocar o instrumento "${nomeInstrumento || 'solicitado'}".`,
+      });
+    }
 
     return res.json({
       matches,
-      exactCount: exatos.length,
-      similarCount: similares.length,
+      exactCount: onlyInstrument ? matches.length : exatos.length,
+      similarCount: onlyInstrument ? 0 : similares.length,
     });
   } catch (err) {
     console.error('Erro no matcher AI:', err.message);

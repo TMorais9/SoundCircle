@@ -9,18 +9,44 @@ import unicodedata
 import math
 
 INSTRUMENT_SYNONYMS = {
-    "voz": ["vocalista", "cantor", "cantora", "canto", "vozes"],
-    "guitarra": ["guitarrista", "guitarra eletrica", "guitarra acustica"],
-    "baixo": ["baixista", "contrabaixo"],
-    "bateria": ["baterista", "drums", "percussao"],
-    "teclado": ["piano", "pianista", "sintetizador", "synth"],
+    "voz": [
+        "vocalista",
+        "cantor",
+        "cantora",
+        "canto",
+        "vozes",
+        "voz principal",
+        "backing vocals",
+        "vocals",
+        "singer",
+        "vocal",
+    ],
+    "guitarra": [
+        "guitarrista",
+        "guitarra eletrica",
+        "guitarra acustica",
+        "guitarra classica",
+        "violao",
+        "electric guitar",
+        "acoustic guitar",
+        "guitar",
+    ],
+    "baixo": ["baixista", "contrabaixo", "baixo eletrico", "bass", "bass guitar"],
+    "bateria": ["baterista", "drums", "percussao", "kit", "percussion", "drummer"],
+    "teclado": ["piano", "pianista", "sintetizador", "synth", "keyboard", "keys"],
 }
 
 
 def _normalize(text: str) -> str:
     """Lowercase and strip accents to compare values reliably."""
     nfkd = unicodedata.normalize("NFKD", text or "")
-    return "".join(c for c in nfkd if not unicodedata.combining(c)).lower().strip()
+    cleaned = "".join(c for c in nfkd if not unicodedata.combining(c)).lower()
+    cleaned = cleaned.replace("-", " ").replace("_", " ")
+    return " ".join(cleaned.split())
+
+def _tokenize(text: str) -> List[str]:
+    base = _normalize(text).replace("/", " ").replace(",", " ")
+    return [t for t in base.split() if t]
 
 
 def _safe_ratio(a: str, b: str) -> float:
@@ -53,6 +79,9 @@ def _instrument_keys(name: str) -> List[str]:
 def _instrument_aliases(name: str) -> List[str]:
     """Build alias list for an instrument name to compare request vs base."""
     aliases = set(_instrument_keys(name))
+    tokens = _tokenize(name)
+    aliases.update(tokens)
+    aliases.update({_singularize(t) for t in tokens})
     return list(aliases)
 
 
@@ -97,7 +126,7 @@ class CSPMatcher:
 
     def _instrumento_match(self, musico: Dict[str, Any], instrumento: str, relax: bool) -> bool:
         alvo_keys = set(_instrument_aliases(instrumento))
-        limiar = 0.7 if relax else 0.7
+        limiar = 0.7 if relax else 0.82
         for entrada in musico.get("instrumentos", []) or []:
             inst_keys = set(_instrument_aliases(entrada.get("nome", "")))
             if alvo_keys.intersection(inst_keys):
@@ -111,6 +140,8 @@ class CSPMatcher:
         best = 0.0
         for entrada in musico.get("instrumentos", []) or []:
             inst_keys = set(_instrument_aliases(entrada.get("nome", "")))
+            if alvo_keys.intersection(inst_keys):
+                return 1.0
             for a in alvo_keys:
                 for b in inst_keys:
                     best = max(best, _safe_ratio(a, b))
@@ -295,7 +326,8 @@ class CSPMatcher:
             inst_nome = None
             inst_anos = None
             if prefs.instrumento:
-                inst_match = self._instrumento_match(musico, prefs.instrumento, relax=True)
+                # Usa verificação estrita para não misturar instrumentos diferentes
+                inst_match = self._instrumento_match(musico, prefs.instrumento, relax=False)
                 inst_score = self._instrumento_score(musico, prefs.instrumento)
                 inst_nome, inst_anos, inst_score = self._melhor_instrumento(musico, prefs.instrumento)
 
