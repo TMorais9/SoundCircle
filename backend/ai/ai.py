@@ -14,7 +14,6 @@ INSTRUMENT_SYNONYMS = {
     "baixo": ["baixista", "contrabaixo"],
     "bateria": ["baterista", "drums", "percussao"],
     "teclado": ["piano", "pianista", "sintetizador", "synth"],
-    "violino": ["violinista"],
 }
 
 
