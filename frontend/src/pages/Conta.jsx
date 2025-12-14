@@ -619,11 +619,16 @@ function Conta() {
         }
     };
 
+    const handleLoginSubmit = (e) => {
+        e?.preventDefault?.();
+        handleLogin();
+    };
+
     const renderAuthModal = () => (
         <div className={styles.loginModalOverlay}>
             <div className={styles.loginModal}>
                 {!modoRegisto ? (
-                    <>
+                    <form onSubmit={handleLoginSubmit}>
                         <h2>Iniciar Sessão</h2>
                         {authError && <p className={styles.authError}>{authError}</p>}
                         <input
@@ -648,9 +653,8 @@ function Conta() {
 
                         <div className={styles.loginButtons}>
                             <button
-                                type="button"
+                                type="submit"
                                 className={styles.loginConfirm}
-                                onClick={handleLogin}
                                 disabled={isAuthLoading}
                             >
                                 {isAuthLoading ? "A entrar..." : "Entrar"}
@@ -672,7 +676,7 @@ function Conta() {
                             }}>
                             Criar nova conta
                         </p>
-                    </>
+                    </form>
                 ) : (
                     <>
                         <h2>Criar Conta</h2>

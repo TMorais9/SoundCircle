@@ -1,40 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from difflib import SequenceMatcher
 import json
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 import unicodedata
 import math
-
-INSTRUMENT_SYNONYMS = {
-    "voz": [
-        "vocalista",
-        "cantor",
-        "cantora",
-        "canto",
-        "vozes",
-        "voz principal",
-        "backing vocals",
-        "vocals",
-        "singer",
-        "vocal",
-    ],
-    "guitarra": [
-        "guitarrista",
-        "guitarra eletrica",
-        "guitarra acustica",
-        "guitarra classica",
-        "violao",
-        "electric guitar",
-        "acoustic guitar",
-        "guitar",
-    ],
-    "baixo": ["baixista", "contrabaixo", "baixo eletrico", "bass", "bass guitar"],
-    "bateria": ["baterista", "drums", "percussao", "kit", "percussion", "drummer"],
-    "teclado": ["piano", "pianista", "sintetizador", "synth", "keyboard", "keys"],
-}
+from difflib import SequenceMatcher
 
 
 def _normalize(text: str) -> str:
@@ -44,10 +16,6 @@ def _normalize(text: str) -> str:
     cleaned = cleaned.replace("-", " ").replace("_", " ")
     return " ".join(cleaned.split())
 
-def _tokenize(text: str) -> List[str]:
-    base = _normalize(text).replace("/", " ").replace(",", " ")
-    return [t for t in base.split() if t]
-
 
 def _safe_ratio(a: str, b: str) -> float:
     """Similarity ratio between two strings (0-1)."""
@@ -56,33 +24,33 @@ def _safe_ratio(a: str, b: str) -> float:
     return SequenceMatcher(None, _normalize(a), _normalize(b)).ratio()
 
 
-def _singularize(text: str) -> str:
-    """Remove plural 's' when it helps match words like 'vocalistas'."""
-    if len(text) > 3 and text.endswith("s"):
-        return text[:-1]
-    return text
+INSTRUMENT_ALIASES = {
+    "pianista": "piano",
+    "piano": "piano",
+    "baixista": "baixo",
+    "baixo": "baixo",
+    "baterista": "bateria",
+    "bateria": "bateria",
+    "guitarrista": "guitarra",
+    "guitarra": "guitarra",
+    "vocalista": "voz",
+    "cantor": "voz",
+    "cantora": "voz",
+    "voz": "voz",
+}
 
 
-def _instrument_keys(name: str) -> List[str]:
+def _instrument_key(name: str) -> str:
     norm = _normalize(name)
-    keys = {norm, _singularize(norm)}
-    for canon, synonyms in INSTRUMENT_SYNONYMS.items():
-        canon_norm = _normalize(canon)
-        synonym_norms = {_normalize(s) for s in synonyms}
-        if norm == canon_norm or norm in synonym_norms:
-            keys.add(canon_norm)
-            keys.update(synonym_norms)
-            keys.update({_singularize(v) for v in keys})
-    return list(keys)
+    return INSTRUMENT_ALIASES.get(norm, norm)
 
 
-def _instrument_aliases(name: str) -> List[str]:
-    """Build alias list for an instrument name to compare request vs base."""
-    aliases = set(_instrument_keys(name))
-    tokens = _tokenize(name)
-    aliases.update(tokens)
-    aliases.update({_singularize(t) for t in tokens})
-    return list(aliases)
+def _parse_int(value: Any) -> Optional[int]:
+    try:
+        parsed = int(value)
+        return parsed
+    except (TypeError, ValueError):
+        return None
 
 
 @dataclass
@@ -98,9 +66,9 @@ class CSPMatcher:
         self.musicos = list(musicos)
 
     def _anos_por_instrumento(self, musico: Dict[str, Any], instrumento: str) -> Optional[int]:
-        alvo = _normalize(instrumento)
+        alvo = _instrument_key(instrumento)
         for entrada in musico.get("instrumentos", []) or []:
-            if _normalize(entrada.get("nome", "")) == alvo:
+            if _instrument_key(entrada.get("nome", "")) == alvo:
                 anos = entrada.get("anos_experiencia")
                 if anos is None:
                     continue
@@ -125,26 +93,20 @@ class CSPMatcher:
         return [_normalize(c) for c in caracs if c is not None]
 
     def _instrumento_match(self, musico: Dict[str, Any], instrumento: str, relax: bool) -> bool:
-        alvo_keys = set(_instrument_aliases(instrumento))
-        limiar = 0.7 if relax else 0.82
+        alvo = _instrument_key(instrumento)
         for entrada in musico.get("instrumentos", []) or []:
-            inst_keys = set(_instrument_aliases(entrada.get("nome", "")))
-            if alvo_keys.intersection(inst_keys):
-                return True
-            if any(_safe_ratio(a, b) >= limiar for a in alvo_keys for b in inst_keys):
+            inst_key = _instrument_key(entrada.get("nome", ""))
+            ratio = _safe_ratio(inst_key, alvo)
+            if ratio >= (0.95 if not relax else 0.78):
                 return True
         return False
 
     def _instrumento_score(self, musico: Dict[str, Any], instrumento: str) -> float:
-        alvo_keys = set(_instrument_aliases(instrumento))
+        alvo = _instrument_key(instrumento)
         best = 0.0
         for entrada in musico.get("instrumentos", []) or []:
-            inst_keys = set(_instrument_aliases(entrada.get("nome", "")))
-            if alvo_keys.intersection(inst_keys):
-                return 1.0
-            for a in alvo_keys:
-                for b in inst_keys:
-                    best = max(best, _safe_ratio(a, b))
+            inst_key = _instrument_key(entrada.get("nome", ""))
+            best = max(best, _safe_ratio(inst_key, alvo))
         return best
 
     def _melhor_instrumento(self, musico: Dict[str, Any], instrumento: Optional[str]) -> Tuple[Optional[str], Optional[int], float]:
@@ -152,17 +114,13 @@ class CSPMatcher:
         if not instrumento:
             entrada = (musico.get("instrumentos") or [None])[0] or {}
             return entrada.get("nome"), entrada.get("anos_experiencia"), 0.0
-        alvo_keys = set(_instrument_aliases(instrumento))
-        melhor = (None, None, 0.0)
+        alvo_norm = _instrument_key(instrumento)
         for entrada in musico.get("instrumentos", []) or []:
-            inst_keys = set(_instrument_aliases(entrada.get("nome", "")))
-            local_best = 0.0
-            for a in alvo_keys:
-                for b in inst_keys:
-                    local_best = max(local_best, _safe_ratio(a, b))
-            if local_best > melhor[2]:
-                melhor = (entrada.get("nome"), entrada.get("anos_experiencia"), local_best)
-        return melhor
+            inst_key = _instrument_key(entrada.get("nome", ""))
+            ratio = _safe_ratio(inst_key, alvo_norm)
+            if ratio >= 0.78:
+                return entrada.get("nome"), entrada.get("anos_experiencia"), ratio
+        return (None, None, 0.0)
 
     def _localizacao_match(self, musico: Dict[str, Any], localizacao: str, relax: bool) -> bool:
         ratio = _safe_ratio(musico.get("localizacao", ""), localizacao)
@@ -219,10 +177,10 @@ class CSPMatcher:
                 else self._anos_globais(musico)
             )
             if anos is None:
-                return relax  # só aceita em modo relaxado se não há dados
+                return False  # sem anos_experiencia não cumpre o critério
             if relax:
-                return abs(anos - anos_alvo) <= 2 or anos >= anos_alvo
-            return anos >= anos_alvo and abs(anos - anos_alvo) <= 1
+                return abs(anos - anos_alvo) <= 4
+            return anos == anos_alvo
 
         return True
 
@@ -243,8 +201,7 @@ class CSPMatcher:
             )
             if anos is not None:
                 diff = abs(anos - prefs.anos_experiencia)
-                # função decrescente suave que penaliza desvios maiores
-                detalhes["anos_experiencia"] = round(math.exp(-diff / 4.0), 3)
+                detalhes["anos_experiencia"] = 1.0 if diff == 0 else max(0.0, 1 - (diff / 4.0))
                 score += 2.5 * detalhes["anos_experiencia"]
             else:
                 detalhes["anos_experiencia"] = 0.2  # boost menor se não há dados
@@ -290,10 +247,8 @@ class CSPMatcher:
 
             if not exato:
                 if only_instrument and prefs.instrumento:
-                    # para pedidos só de instrumento, basta casar em modo relax para ser exato
-                    exato = self._instrumento_match(musico, prefs.instrumento, relax=True)
-                    aproximado = exato
-                    if not exato:
+                    aproximado = self._instrumento_match(musico, prefs.instrumento, relax=True)
+                    if not aproximado:
                         continue
                 else:
                     aproximado = self._satisfaz_constraints(musico, prefs, relax=True)
@@ -326,9 +281,8 @@ class CSPMatcher:
             inst_nome = None
             inst_anos = None
             if prefs.instrumento:
-                # Usa verificação estrita para não misturar instrumentos diferentes
-                inst_match = self._instrumento_match(musico, prefs.instrumento, relax=False)
                 inst_score = self._instrumento_score(musico, prefs.instrumento)
+                inst_match = inst_score >= 0.78
                 inst_nome, inst_anos, inst_score = self._melhor_instrumento(musico, prefs.instrumento)
 
             resultados.append(
@@ -399,10 +353,11 @@ if __name__ == "__main__":
     musicos = payload.get("musicos", [])
     pref_data = payload.get("preferencias", {}) or {}
     max_resultados = payload.get("max_resultados", 10)
+    anos_pref = _parse_int(pref_data.get("anos_experiencia"))
 
     preferencias = Preferencias(
         instrumento=pref_data.get("instrumento"),
-        anos_experiencia=pref_data.get("anos_experiencia"),
+        anos_experiencia=anos_pref,
         localizacao=pref_data.get("localizacao"),
         caracteristicas=pref_data.get("caracteristicas") or [],
     )

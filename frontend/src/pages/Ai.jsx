@@ -5,14 +5,6 @@ import styles from "./ai.module.css";
 import UsersAPI from "../services/usersAPI";
 import AiAPI from "../services/aiAPI";
 
-const extractYears = (text) => {
-    if (!text) return null;
-    const match = text.match(/(\d+)\s*(anos|ano)?/i);
-    if (!match) return null;
-    const value = Number(match[1]);
-    return Number.isFinite(value) ? value : null;
-};
-
 function Ai() {
     const [messages, setMessages] = useState([
         {
@@ -21,7 +13,6 @@ function Ai() {
             matches: [],
         },
     ]);
-    const [inputText, setInputText] = useState("");
     const [instrumento, setInstrumento] = useState("");
     const [anosExperiencia, setAnosExperiencia] = useState("");
     const [localizacao, setLocalizacao] = useState("");
@@ -62,20 +53,26 @@ function Ai() {
         );
     };
 
+    const instrumentOptions = [
+        { value: "", label: "Qualquer" },
+        { value: "Voz", label: "Vocalista" },
+        { value: "Guitarra", label: "Guitarrista" },
+        { value: "Baixo", label: "Baixista" },
+        { value: "Bateria", label: "Baterista" },
+        { value: "Piano", label: "Pianista" },
+    ];
+
     const buildPreferences = () => {
         const selectedTraits = caracteristicasDisponiveis
             .filter((trait) => caracteristicasSelecionadas.includes(trait.id))
             .map((trait) => trait.nome);
 
-        const instrumentoTexto = instrumento.trim() || inputText.trim() || null;
         return {
             instrumento: instrumento.trim() || null,
-            anosExperiencia:
-                anosExperiencia !== "" ? Number(anosExperiencia) : extractYears(inputText) ?? null,
+            anosExperiencia: anosExperiencia !== "" ? Number(anosExperiencia) : null,
             localizacao: localizacao.trim() || null,
             caracteristicas: selectedTraits,
             userId: currentUserId,
-            instrumentoFallback: instrumentoTexto,
         };
     };
 
@@ -95,14 +92,14 @@ function Ai() {
 
         let intro = "";
         if (!matches.length) {
-            intro = `Não encontrei exatamente o que pediste, mas estas pessoas são as mais próximas ${baseContext}.`;
+            intro = `Não encontrei exatamente o que pediste, mas estas pessoas podem-se encaixar no que procuras ${baseContext}.`;
         } else if (exactCount > 0) {
             intro = `Encontrei ${exactCount} perfis que cumprem exatamente o que pediste ${baseContext}.`;
             if (similarCount > 0) {
                 intro += ` Também tenho ${similarCount} perfis semelhantes que podem encaixar.`;
             }
         } else {
-            intro = `Não encontrei tudo exatamente, mas estas sugestões são as mais próximas ${baseContext}.`;
+            intro = `Não encontrei exatamente o que pediste, mas estas pessoas podem-se encaixar no que procuras ${baseContext}.`;
         }
 
         const listItems = matches.map((m) => {
@@ -141,24 +138,24 @@ function Ai() {
         if (loadingMatch) return;
 
         const prefs = buildPreferences();
-        const userText =
-            inputText.trim() ||
-            `Instrumento: ${prefs.instrumento || "qualquer"}, Anos: ${prefs.anosExperiencia || "qualquer"}, Localização: ${prefs.localizacao || "qualquer"}`;
+        const userText = `Instrumento: ${prefs.instrumento || "qualquer"}, Anos: ${prefs.anosExperiencia || "qualquer"}, Localização: ${prefs.localizacao || "qualquer"}`;
         const newMessage = { remetente: "user", texto: userText };
         setMessages((prev) => [...prev, newMessage]);
-        setInputText("");
 
         (async () => {
             try {
                 setLoadingMatch(true);
                 const data = await AiAPI.matchMusicos({
-                    instrumento: prefs.instrumento || prefs.instrumentoFallback,
+                    instrumento: prefs.instrumento,
                     anosExperiencia: prefs.anosExperiencia,
                     localizacao: prefs.localizacao,
                     caracteristicas: prefs.caracteristicas,
                     userId: prefs.userId,
                 });
                 const matches = data?.matches || [];
+                const noResultsMessage =
+                    (!matches.length && data?.message) ||
+                    null;
                 const counts = {
                     exactCount: data?.exactCount ?? matches.filter((m) => m.exato).length,
                     similarCount: data?.similarCount ?? 0,
@@ -166,7 +163,7 @@ function Ai() {
                 const formatted = formatResponse(matches, prefs, counts);
                 const respostaAI = {
                     remetente: "ai",
-                    texto: formatted.intro,
+                    texto: noResultsMessage || formatted.intro,
                     listItems: formatted.listItems,
                     matches: matches.map((m) => ({ id: m.id, nome: m.nome })),
                 };
@@ -233,12 +230,16 @@ function Ai() {
                             <div className={styles.filterRow}>
                                 <div className={styles.filterField}>
                                     <label>Instrumento</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Ex: Voz, Guitarra, Piano..."
+                                    <select
                                         value={instrumento}
                                         onChange={(e) => setInstrumento(e.target.value)}
-                                    />
+                                    >
+                                        {instrumentOptions.map((opt) => (
+                                            <option key={opt.value || "qualquer"} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className={styles.filterField}>
                                     <label>Anos de experiência</label>
@@ -284,19 +285,8 @@ function Ai() {
                             </div>
                         </div>
                         <div className={styles.textAndButton}>
-                            <input
-                                type="text"
-                                placeholder="Escreve ou reforça o pedido (opcional)..."
-                                value={inputText}
-                                onChange={(e) => setInputText(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleSend(e);
-                                }}
-                            />
-                            <button type="button" onClick={handleSend} disabled={loadingMatch}>
-                                <span className="material-symbols-outlined">
-                                    {loadingMatch ? "hourglass_top" : "send"}
-                                </span>
+                            <button type="submit" disabled={loadingMatch}>
+                                {loadingMatch ? "A procurar..." : "Procurar"}
                             </button>
                         </div>
                     </form>
