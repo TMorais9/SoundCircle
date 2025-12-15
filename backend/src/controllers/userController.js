@@ -3,7 +3,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const User = require('../models/userModel');
 const Instrumento = require('../models/instrumentoModel');
-const UserInst = require('../models/userinstmodel');
+const UserInst = require('../models/userInstModel');
 
 const VALID_LEVELS = ['iniciante', 'intermedio', 'avancado', 'profissional'];
 

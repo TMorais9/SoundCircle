@@ -10,11 +10,11 @@ const app = express();
 
 const userRoutes = require('./routes/userRoutes');
 const instrumentoRoutes = require('./routes/instrumentoRoutes');
-const userinstRoutes = require('./routes/userinstroutes');
+const userinstRoutes = require('./routes/userInstRoutes');
 const mensagemRoutes = require('./routes/mensagemRoutes');
 const caracteristicaRoutes = require('./routes/caracteristicaRoutes');
 const usercarRoutes = require('./routes/usercarRoutes');
-const userphotoRoutes = require('./routes/userphotoRoutes');
+const userphotoRoutes = require('./routes/userPhotoRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 
 app.use(cors({

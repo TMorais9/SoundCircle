@@ -1,6 +1,6 @@
 const express = require('express');
 const { getAll, getByIds, create, update, deleteUserInst } = require('../controllers/userInstController');
-const { getByUserWithNames } = require('../models/userinstmodel');
+const { getByUserWithNames } = require('../models/userInstModel');
 const router = express.Router();
 
 router.get('/', getAll);

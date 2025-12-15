@@ -1,4 +1,4 @@
-const UserInst = require('../models/userinstmodel');
+const UserInst = require('../models/userInstModel');
 
 const normalizeYears = (value) => {
   if (value === undefined || value === null || value === '') return null;
