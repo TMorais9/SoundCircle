@@ -537,11 +537,6 @@
     }
 }
 
-/* --- MODAL DE TUTORIAL --- */
-
-
-
-/* --- Animações --- */
 @keyframes slideUp {
     from {
         transform: translateY(20px);
@@ -554,7 +549,6 @@
     }
 }
 
-/* --- Responsivo --- */
 @media (max-width: 900px) {
     .tutorialModal {
         flex-direction: column;

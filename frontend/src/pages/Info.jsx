@@ -228,7 +228,7 @@ function Info() {
         const instrumentName =
             firstInstrument ||
             profile?.instrumento ||
-            profile?.nome; // última hipótese para bandas/artistas sem instrumento definido
+            profile?.nome;
         return buildBackgroundStyle(instrumentName);
     }, [profile?.instrumento, profile?.instrumentosDetalhes, profile?.nome]);
 

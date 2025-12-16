@@ -152,7 +152,6 @@ exports.match = async (req, res) => {
       : resultados;
 
     const normalizados = filtrados.map((r) => {
-      // Exato só quando: instrumento casa e anos/localização cumprem regras estritas
       const instOk =
         !preferencias.instrumento ||
         r.instrumento_match === true ||
@@ -211,7 +210,6 @@ exports.match = async (req, res) => {
 
     let matches = [...exatos, ...similares];
 
-    // Garantir que cada match devolve info de instrumento para o frontend
     const enrichedMatches = matches.map((m) => {
       const instrumentos = Array.isArray(m.instrumentos) ? m.instrumentos : [];
       const firstInst = instrumentos[0] || {};

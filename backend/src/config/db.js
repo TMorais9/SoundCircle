@@ -26,9 +26,9 @@ const resolveSocketPath = () => {
   }
 
   const defaultSocketCandidates = [
-    '/tmp/mysql.sock', // macOS / Linux default
-    '/var/run/mysqld/mysqld.sock', // Debian/Ubuntu
-    '/var/lib/mysql/mysql.sock', // RHEL/CentOS
+    '/tmp/mysql.sock',
+    '/var/run/mysqld/mysqld.sock',
+    '/var/lib/mysql/mysql.sock',
   ];
 
   return defaultSocketCandidates.find((candidate) => fs.existsSync(candidate));
