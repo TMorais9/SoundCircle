@@ -118,7 +118,17 @@ const canonicalizeInstrument = (raw) => {
 };
 
 exports.match = async (req, res) => {
-  const { instrumento, anosExperiencia, localizacao, caracteristicas, userId } = req.body || {};
+  const {
+    instrumento,
+    anosExperiencia,
+    localizacao,
+    caracteristicas,
+    userId,
+    instrumentos_requeridos,
+    banda,
+    requisitos_por_instrumento,
+    politica_localizacao_banda,
+  } = req.body || {};
 
   try {
     const rows = await runQuery(User.getAllWithDetails);
@@ -129,6 +139,18 @@ exports.match = async (req, res) => {
     }
 
     const parsedYears = Number(anosExperiencia);
+    const instrumentosReqRaw =
+      instrumentos_requeridos ||
+      (banda && (banda.instrumentos || banda.instrumentos_requeridos)) ||
+      [];
+    const instrumentos_reqs = Array.isArray(instrumentosReqRaw)
+      ? instrumentosReqRaw.filter(Boolean).map(canonicalizeInstrument)
+      : [];
+
+    const requisitosPorInstrumento = requisitos_por_instrumento || (banda && banda.requisitos_por_instrumento) || {};
+    const politicaBanda =
+      politica_localizacao_banda || (banda && banda.politica_localizacao_banda) || undefined;
+
     const preferencias = {
       instrumento: canonicalizeInstrument(instrumento || null),
       anos_experiencia:
@@ -137,6 +159,9 @@ exports.match = async (req, res) => {
           : null,
       localizacao: localizacao || null,
       caracteristicas: Array.isArray(caracteristicas) ? caracteristicas : [],
+      instrumentos_requeridos: instrumentos_reqs,
+      requisitos_por_instrumento: requisitosPorInstrumento,
+      politica_localizacao_banda: politicaBanda,
     };
 
     const resultados = await runPythonMatcher(musicos, preferencias);
