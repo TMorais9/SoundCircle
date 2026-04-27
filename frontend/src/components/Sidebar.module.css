@@ -5,41 +5,55 @@
     width: var(--sidebar-collapsed, 100px);
     background: rgba(255, 255, 255, 0.1);
     box-shadow:
-        0 20px 50px rgba(0, 0, 0, 0.22),
+        0 16px 48px rgba(0, 0, 0, 0.18),
         inset 0 1px 0 rgba(255, 255, 255, 0.22);
-    padding: 18px 12px;
+    padding: 16px 10px 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 4px;
     z-index: 1200;
-    transition: width 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
-    border-radius: 16px;
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.28s ease;
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.22);
     overflow: hidden;
     isolation: isolate;
-    transform: translateZ(0) translateY(4px);
 }
 
 .sidebar:hover {
     width: var(--sidebar-expanded, 260px);
-    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.24);
-    transform: translateY(-2px);
+    box-shadow:
+        0 20px 56px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
+/* ── Logo ────────────────────────────────────────── */
 .logoArea {
     width: 100%;
-    height: 96px;
+    height: 80px;
     display: grid;
     place-items: center;
     position: relative;
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
     overflow: hidden;
     background: transparent;
     border: none;
+    flex-shrink: 0;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+}
+
+.logoArea::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 14px;
+    right: 14px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.18);
 }
 
 .logo {
@@ -51,68 +65,31 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.22s ease;
     color: #ffe8de;
 }
 
-.logoCollapsed {
-    opacity: 1;
-}
+.logoCollapsed { opacity: 1; }
+.logoExpanded  { opacity: 0; }
 
-.logoExpanded {
-    opacity: 0;
-}
-
-.sidebar:hover .logoCollapsed {
-    opacity: 0;
-}
-
-.sidebar:hover .logoExpanded {
-    opacity: 1;
-}
+.sidebar:hover .logoCollapsed { opacity: 0; }
+.sidebar:hover .logoExpanded  { opacity: 1; }
 
 .logoImg {
-    height: 80px;
+    height: 68px;
     width: auto;
     object-fit: contain;
     display: block;
 }
 
+/* ── Nav ─────────────────────────────────────────── */
 .nav {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
     align-items: center;
-    justify-content: center;
-}
-
-.backButton {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 12px;
-    min-height: 52px;
-    border-radius: 16px;
-    color: #212121;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-    gap: 0;
-    margin-top: auto;
-}
-
-.sidebar:hover .backButton {
-    justify-content: flex-start;
-    padding-left: 12px;
-}
-
-.backButton:hover {
-    transform: translateX(2px);
-    box-shadow: none;
-    background: rgba(255, 255, 255, 0.14);
+    flex: 1;
 }
 
 .navItem {
@@ -121,68 +98,107 @@
     align-items: center;
     justify-content: center;
     padding: 10px 12px;
-    min-height: 52px;
-    border-radius: 16px;
-    color: #fff;
+    min-height: 48px;
+    border-radius: 14px;
+    color: rgba(255, 255, 255, 0.88);
     text-decoration: none;
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    transition: background 0.18s ease, transform 0.18s ease, color 0.18s ease;
     background: transparent;
+    position: relative;
+    overflow: hidden;
 }
 
 .navIcon {
-    font-size: 40px !important;
+    font-size: 26px !important;
     line-height: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .navLabel {
     font-family: "Poppins", sans-serif;
-    font-size: 22px;
+    font-size: 15px;
     font-weight: 600;
     opacity: 0;
     max-width: 0;
     white-space: nowrap;
     overflow: hidden;
-    transition: opacity 0.2s ease, max-width 0.2s ease, margin 0.2s ease;
+    transition: opacity 0.22s ease, max-width 0.22s ease, margin 0.22s ease;
+    letter-spacing: 0.01em;
 }
 
 .sidebar:hover .navItem {
     justify-content: flex-start;
-    padding-left: 12px;
+    padding-left: 14px;
 }
 
 .sidebar:hover .navLabel {
     opacity: 1;
-    max-width: 200px;
-    margin-left: 10px;
+    max-width: 180px;
+    margin-left: 12px;
 }
 
-.navItem:hover {
-    transform: translateX(2px);
-    box-shadow: none;
+.navItem:hover:not(.active) {
     background: rgba(255, 255, 255, 0.14);
-}
-
-.active {
-    background: rgba(255, 255, 255, 0.18);
-    box-shadow:
-        0 6px 14px rgba(0, 0, 0, 0.14),
-        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    color: #fff;
     transform: translateX(2px);
 }
 
+/* Active state: subtle bg + left accent bar */
+.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 22%;
+    bottom: 22%;
+    width: 3px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 0 3px 3px 0;
+}
+
+/* ── Back button ─────────────────────────────────── */
+.backButton {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 12px;
+    min-height: 48px;
+    border-radius: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background 0.18s ease, transform 0.18s ease;
+    margin-top: auto;
+    flex-shrink: 0;
+}
+
+.sidebar:hover .backButton {
+    justify-content: flex-start;
+    padding-left: 14px;
+}
+
+.backButton:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    transform: translateX(2px);
+}
+
+/* ── Responsive ──────────────────────────────────── */
 @media (max-width: 768px) {
-    .sidebar {
-        width: 85px;
-    }
-
-    .sidebar:hover {
-        width: 220px;
-    }
-
-    .navIcon {
-        font-size: 26px;
-    }
+    .sidebar        { width: 78px; }
+    .sidebar:hover  { width: 220px; }
+    .navIcon        { font-size: 22px !important; }
+    .logoImg        { height: 58px; }
 }
