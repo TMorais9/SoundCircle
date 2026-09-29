@@ -1,6 +1,8 @@
 const path = require('path');
 const { spawn } = require('child_process');
 const User = require('../models/userModel');
+const Instrumento = require('../models/instrumentoModel');
+const Caracteristica = require('../models/caracteristicaModel');
 
 const runQuery = (fn, ...args) =>
   new Promise((resolve, reject) => {
@@ -54,7 +56,7 @@ const buildMusicians = (rows, ignoreUserId) =>
       };
     });
 
-const runPythonMatcher = (musicos, preferencias) =>
+const runPythonScript = (payload) =>
   new Promise((resolve, reject) => {
     const pythonBin = process.env.PYTHON_BIN || 'python3';
     const scriptPath = path.join(__dirname, '..', '..', 'ai', 'ai.py');
@@ -79,22 +81,19 @@ const runPythonMatcher = (musicos, preferencias) =>
       }
       try {
         const parsed = JSON.parse(stdout);
-        if (parsed && parsed.resultados) return resolve(parsed.resultados);
+        if (parsed && parsed.resultados) return resolve(parsed);
         return reject(new Error('Resposta inválida do matcher'));
       } catch (err) {
         return reject(new Error(`Falha a ler saída do matcher: ${err.message}`));
       }
     });
 
-    child.stdin.write(
-      JSON.stringify({
-        musicos,
-        preferencias,
-        max_resultados: 10,
-      })
-    );
+    child.stdin.write(JSON.stringify(payload));
     child.stdin.end();
   });
+
+const runPythonMatcher = (musicos, preferencias) =>
+  runPythonScript({ musicos, preferencias, max_resultados: 10 }).then((parsed) => parsed.resultados);
 
 const canonicalizeInstrument = (raw) => {
   const trimmed = typeof raw === 'string' ? raw.trim() : '';
@@ -115,6 +114,111 @@ const canonicalizeInstrument = (raw) => {
     voz: 'voz',
   };
   return aliases[norm] || trimmed;
+};
+
+const enrichMatch = (m) => {
+  const instrumentos = Array.isArray(m.instrumentos) ? m.instrumentos : [];
+  const firstInst = instrumentos[0] || {};
+  return {
+    ...m,
+    instrumentos,
+    instrumento_escolhido: m.instrumento_escolhido || firstInst.nome || null,
+    instrumento_anos:
+      m.instrumento_anos ??
+      (Number.isFinite(firstInst.anos_experiencia) ? firstInst.anos_experiencia : null),
+  };
+};
+
+// Usado pelo chat: confia sempre na ordenação/pontuação que já vem do motor
+// CSP (backend/ai/ai.py), sem voltar a filtrar por thresholds. O motor já
+// garante que, mesmo sem nenhum músico a cumprir os critérios, devolve os
+// mais parecidos — por isso aqui nunca descartamos esses resultados.
+const buildChatResults = (resultados, maxTotal = 8) => {
+  const ordenados = resultados.slice(0, maxTotal).map(enrichMatch);
+  const exactCount = ordenados.filter((r) => r.exato).length;
+  return {
+    matches: ordenados,
+    exactCount,
+    similarCount: ordenados.length - exactCount,
+  };
+};
+
+const classifyMatches = (resultados, preferencias) => {
+  const onlyInstrument =
+    !!preferencias.instrumento &&
+    preferencias.anos_experiencia == null &&
+    !preferencias.localizacao &&
+    (!preferencias.caracteristicas || preferencias.caracteristicas.length === 0);
+
+  const filtrados = onlyInstrument
+    ? resultados.filter((r) => r.instrumento_match === true || (r.instrumento_score ?? 0) >= 0.78)
+    : resultados;
+
+  const normalizados = filtrados.map((r) => {
+    const instOk =
+      !preferencias.instrumento ||
+      r.instrumento_match === true ||
+      (r.instrumento_score ?? 0) >= 0.75;
+
+    const anosStrict =
+      preferencias.anos_experiencia == null ||
+      (r.anos_diff != null && Number(r.anos_diff) === 0);
+
+    const anosRelax =
+      preferencias.anos_experiencia == null ||
+      r.anos_diff == null ||
+      Number(r.anos_diff) <= 4;
+
+    const locStrict =
+      !preferencias.localizacao ||
+      (r.localizacao_ratio ?? 0) >= 0.85;
+
+    const locRelax =
+      !preferencias.localizacao ||
+      (r.localizacao_ratio ?? 0) >= 0.7;
+
+    const shouldBeExact =
+      (onlyInstrument && instOk) ||
+      (instOk && anosStrict && locStrict);
+
+    if (shouldBeExact) {
+      return { ...r, exato: true, instrumento_match: true };
+    }
+
+    return {
+      ...r,
+      _instOk: instOk,
+      _anosRelax: anosRelax,
+      _locRelax: locRelax,
+    };
+  });
+
+  const exatos = normalizados.filter((r) => r.exato);
+
+  const similares = normalizados
+    .filter((r) => !exatos.includes(r))
+    .filter((r) => {
+      const instOk = r._instOk ?? (!preferencias.instrumento || r.instrumento_match === true || (r.instrumento_score ?? 0) >= 0.75);
+      const anosOk =
+        (r._anosRelax ?? false) ||
+        preferencias.anos_experiencia == null ||
+        (r.anos_diff != null && Number(r.anos_diff) <= 4);
+      const locOk =
+        (r._locRelax ?? false) ||
+        !preferencias.localizacao ||
+        (r.localizacao_ratio ?? 0) >= 0.7;
+      return instOk && anosOk && locOk;
+    })
+    .slice(0, 5);
+
+  const matches = [...exatos, ...similares];
+  const enrichedMatches = matches.map(enrichMatch);
+
+  return {
+    matches: enrichedMatches,
+    exactCount: onlyInstrument ? enrichedMatches.length : exatos.length,
+    similarCount: onlyInstrument ? 0 : similares.length,
+  };
 };
 
 exports.match = async (req, res) => {
@@ -165,88 +269,7 @@ exports.match = async (req, res) => {
     };
 
     const resultados = await runPythonMatcher(musicos, preferencias);
-
-    const onlyInstrument =
-      !!preferencias.instrumento &&
-      preferencias.anos_experiencia == null &&
-      !preferencias.localizacao &&
-      (!preferencias.caracteristicas || preferencias.caracteristicas.length === 0);
-
-    const filtrados = onlyInstrument
-      ? resultados.filter((r) => r.instrumento_match === true || (r.instrumento_score ?? 0) >= 0.78)
-      : resultados;
-
-    const normalizados = filtrados.map((r) => {
-      const instOk =
-        !preferencias.instrumento ||
-        r.instrumento_match === true ||
-        (r.instrumento_score ?? 0) >= 0.75;
-
-      const anosStrict =
-        preferencias.anos_experiencia == null ||
-        (r.anos_diff != null && Number(r.anos_diff) === 0);
-
-      const anosRelax =
-        preferencias.anos_experiencia == null ||
-        r.anos_diff == null ||
-        Number(r.anos_diff) <= 4;
-
-      const locStrict =
-        !preferencias.localizacao ||
-        (r.localizacao_ratio ?? 0) >= 0.85;
-
-      const locRelax =
-        !preferencias.localizacao ||
-        (r.localizacao_ratio ?? 0) >= 0.7;
-
-      const shouldBeExact =
-        (onlyInstrument && instOk) ||
-        (instOk && anosStrict && locStrict);
-
-      if (shouldBeExact) {
-        return { ...r, exato: true, instrumento_match: true };
-      }
-
-      return {
-        ...r,
-        _instOk: instOk,
-        _anosRelax: anosRelax,
-        _locRelax: locRelax,
-      };
-    });
-
-    const exatos = normalizados.filter((r) => r.exato);
-
-    const similares = normalizados
-      .filter((r) => !exatos.includes(r))
-      .filter((r) => {
-        const instOk = r._instOk ?? (!preferencias.instrumento || r.instrumento_match === true || (r.instrumento_score ?? 0) >= 0.75);
-        const anosOk =
-          (r._anosRelax ?? false) ||
-          preferencias.anos_experiencia == null ||
-          (r.anos_diff != null && Number(r.anos_diff) <= 4);
-        const locOk =
-          (r._locRelax ?? false) ||
-          !preferencias.localizacao ||
-          (r.localizacao_ratio ?? 0) >= 0.7;
-        return instOk && anosOk && locOk;
-      })
-      .slice(0, 5);
-
-    let matches = [...exatos, ...similares];
-
-    const enrichedMatches = matches.map((m) => {
-      const instrumentos = Array.isArray(m.instrumentos) ? m.instrumentos : [];
-      const firstInst = instrumentos[0] || {};
-      return {
-        ...m,
-        instrumentos,
-        instrumento_escolhido: m.instrumento_escolhido || firstInst.nome || null,
-        instrumento_anos:
-          m.instrumento_anos ??
-          (Number.isFinite(firstInst.anos_experiencia) ? firstInst.anos_experiencia : null),
-      };
-    });
+    const { matches: enrichedMatches, exactCount, similarCount } = classifyMatches(resultados, preferencias);
 
     if (enrichedMatches.length === 0) {
       return res.status(200).json({
@@ -255,13 +278,100 @@ exports.match = async (req, res) => {
       });
     }
 
-    return res.json({
-      matches: enrichedMatches,
-      exactCount: onlyInstrument ? enrichedMatches.length : exatos.length,
-      similarCount: onlyInstrument ? 0 : similares.length,
-    });
+    return res.json({ matches: enrichedMatches, exactCount, similarCount });
   } catch (err) {
     console.error('Erro no matcher AI:', err.message);
+    return res.status(500).json({ error: 'Não foi possível gerar sugestões com o motor AI', detail: err.message });
+  }
+};
+
+exports.chat = async (req, res) => {
+  const { texto, userId, instrumento, anosExperiencia, localizacao, caracteristicas } = req.body || {};
+
+  const mensagem = typeof texto === 'string' ? texto.trim() : '';
+
+  // filtros manuais (opcionais, ex.: chips de características) têm sempre
+  // prioridade sobre o que for extraído do texto livre
+  const parsedYears = Number(anosExperiencia);
+  const preferenciasExplicitas = {
+    instrumento: canonicalizeInstrument(instrumento || null),
+    anos_experiencia:
+      Number.isFinite(parsedYears) && `${anosExperiencia ?? ''}`.trim() !== '' ? parsedYears : null,
+    localizacao: localizacao || null,
+    caracteristicas: Array.isArray(caracteristicas) && caracteristicas.length ? caracteristicas : null,
+  };
+
+  const temFiltroExplicito =
+    !!preferenciasExplicitas.instrumento ||
+    !!preferenciasExplicitas.localizacao ||
+    preferenciasExplicitas.anos_experiencia != null ||
+    !!preferenciasExplicitas.caracteristicas;
+
+  if (!mensagem && !temFiltroExplicito) {
+    return res.status(400).json({ error: 'Escreve o que procuras, ou escolhe pelo menos uma característica, para eu poder ajudar.' });
+  }
+
+  try {
+    const [rows, instrumentosDb, caracteristicasDb] = await Promise.all([
+      runQuery(User.getAllWithDetails),
+      runQuery(Instrumento.getAll),
+      runQuery(Caracteristica.getAll),
+    ]);
+
+    const musicos = buildMusicians(rows, userId);
+
+    if (!musicos.length) {
+      return res.status(200).json({ matches: [], message: 'Ainda não existem músicos suficientes na base de dados.' });
+    }
+
+    const instrumentos_conhecidos = instrumentosDb.map((i) => i.nome).filter(Boolean);
+    const caracteristicas_conhecidas = caracteristicasDb.map((c) => c.nome).filter(Boolean);
+
+    const parsed = await runPythonScript({
+      musicos,
+      texto: mensagem,
+      preferencias: preferenciasExplicitas,
+      instrumentos_conhecidos,
+      caracteristicas_conhecidas,
+      max_resultados: 10,
+    });
+
+    const resultados = parsed.resultados || [];
+    const interpretado = parsed.interpretado || {};
+    const preferenciasEfetivas = parsed.preferencias_efetivas || {};
+
+    const entendiNada =
+      !temFiltroExplicito &&
+      !interpretado.instrumento &&
+      !interpretado.localizacao &&
+      interpretado.anos_experiencia == null &&
+      (!interpretado.caracteristicas || interpretado.caracteristicas.length === 0);
+
+    // O motor CSP (ai.py) garante sempre os candidatos mais parecidos, mesmo
+    // que nenhum cumpra exatamente os critérios, por isso só fica vazio se
+    // não houver músicos de todo (já tratado acima).
+    const { matches: enrichedMatches, exactCount, similarCount } = buildChatResults(resultados);
+
+    // Se nenhum resultado é sequer "próximo" (ai.py só chega aqui quando não
+    // há correspondência nem relaxada), o motor ancorou no instrumento
+    // pedido para não mostrar músicos sem qualquer relação com o pedido.
+    const semNenhumProximo =
+      !entendiNada && enrichedMatches.length > 0 && enrichedMatches.every((m) => m.proximo === false);
+
+    const instrumentoUsado =
+      preferenciasEfetivas.instrumento || interpretado.instrumento || preferenciasExplicitas.instrumento || null;
+
+    return res.json({
+      matches: enrichedMatches,
+      exactCount,
+      similarCount,
+      interpretado,
+      entendiNada,
+      semNenhumProximo,
+      instrumentoUsado,
+    });
+  } catch (err) {
+    console.error('Erro no chat AI:', err.message);
     return res.status(500).json({ error: 'Não foi possível gerar sugestões com o motor AI', detail: err.message });
   }
 };

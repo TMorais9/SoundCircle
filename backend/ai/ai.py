@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass, field
 import json
+import re
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 import unicodedata
@@ -99,6 +101,300 @@ def _parse_int(value: Any) -> Optional[int]:
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+# ---------------------------------------------------------------------------
+# Interpretação de texto livre (chatbot)
+# ---------------------------------------------------------------------------
+# Extrai instrumento, distrito, anos de experiência e características a
+# partir de uma frase escrita livremente pelo utilizador, tolerando
+# maiúsculas/minúsculas, acentos e singular/plural.
+
+DISTRITOS_PT = [
+    "Aveiro",
+    "Beja",
+    "Braga",
+    "Bragança",
+    "Castelo Branco",
+    "Coimbra",
+    "Évora",
+    "Faro",
+    "Guarda",
+    "Leiria",
+    "Lisboa",
+    "Portalegre",
+    "Porto",
+    "Santarém",
+    "Setúbal",
+    "Viana do Castelo",
+    "Vila Real",
+    "Viseu",
+]
+
+# Pares de distritos que fazem fronteira entre si (mapa de Portugal
+# continental). Usado para, quando ninguém está no distrito exato pedido,
+# considerar quem está num distrito vizinho como uma correspondência
+# "semelhante" em vez de a ignorar por completo.
+_FRONTEIRAS_DISTRITOS = [
+    ("viana do castelo", "braga"),
+    ("braga", "porto"),
+    ("braga", "vila real"),
+    ("porto", "aveiro"),
+    ("porto", "vila real"),
+    ("vila real", "braganca"),
+    ("vila real", "viseu"),
+    ("vila real", "guarda"),
+    ("braganca", "guarda"),
+    ("aveiro", "viseu"),
+    ("aveiro", "coimbra"),
+    ("viseu", "guarda"),
+    ("viseu", "coimbra"),
+    ("viseu", "castelo branco"),
+    ("guarda", "castelo branco"),
+    ("coimbra", "castelo branco"),
+    ("coimbra", "leiria"),
+    ("castelo branco", "portalegre"),
+    ("castelo branco", "santarem"),
+    ("leiria", "santarem"),
+    ("santarem", "portalegre"),
+    ("santarem", "lisboa"),
+    ("santarem", "setubal"),
+    ("santarem", "evora"),
+    ("portalegre", "evora"),
+    ("lisboa", "setubal"),
+    ("setubal", "evora"),
+    ("setubal", "beja"),
+    ("evora", "beja"),
+    ("beja", "faro"),
+]
+
+
+def _construir_adjacencia_distritos() -> Dict[str, set]:
+    adjacencia: Dict[str, set] = {}
+    for a, b in _FRONTEIRAS_DISTRITOS:
+        adjacencia.setdefault(a, set()).add(b)
+        adjacencia.setdefault(b, set()).add(a)
+    return adjacencia
+
+
+ADJACENCIA_DISTRITOS = _construir_adjacencia_distritos()
+
+# Pontuação de proximidade por número de distritos a atravessar (0 = mesmo
+# distrito). Serve para tratar distritos vizinhos como resultados
+# "semelhantes" mesmo quando os nomes, em texto, não têm nada em comum
+# (ex.: "Braga" e "Porto").
+_PONTUACAO_POR_SALTOS = {0: 1.0, 1: 0.8, 2: 0.6}
+
+
+def _distrito_hops(a: str, b: str, limite: int = 2) -> Optional[int]:
+    """Nº de distritos a atravessar entre `a` e `b` (0 se forem o mesmo)."""
+    origem = _normalize(a)
+    destino = _normalize(b)
+    if not origem or not destino:
+        return None
+    if origem == destino:
+        return 0
+    if origem not in ADJACENCIA_DISTRITOS or destino not in ADJACENCIA_DISTRITOS:
+        return None
+
+    visitados = {origem}
+    fila = deque([(origem, 0)])
+    while fila:
+        atual, dist = fila.popleft()
+        if dist >= limite:
+            continue
+        for vizinho in ADJACENCIA_DISTRITOS.get(atual, ()):
+            if vizinho == destino:
+                return dist + 1
+            if vizinho not in visitados:
+                visitados.add(vizinho)
+                fila.append((vizinho, dist + 1))
+    return None
+
+
+def _proximidade_geografica(a: str, b: str) -> Optional[float]:
+    hops = _distrito_hops(a, b)
+    if hops is None:
+        return None
+    return _PONTUACAO_POR_SALTOS.get(hops)
+
+
+def _localizacao_ratio(a: str, b: str) -> float:
+    """Combina semelhança textual (gralhas/maiúsculas) com proximidade
+    geográfica real entre distritos, usando o que for mais favorável."""
+    ratio = _safe_ratio(a, b)
+    proximidade = _proximidade_geografica(a, b)
+    if proximidade is not None:
+        ratio = max(ratio, proximidade)
+    return ratio
+
+
+NUMEROS_EXTENSO = {
+    "zero": 0, "um": 1, "uma": 1, "dois": 2, "duas": 2, "tres": 3, "quatro": 4,
+    "cinco": 5, "seis": 6, "sete": 7, "oito": 8, "nove": 9, "dez": 10,
+    "onze": 11, "doze": 12, "treze": 13, "catorze": 14, "quatorze": 14,
+    "quinze": 15, "dezasseis": 16, "dezesseis": 16, "dezassete": 17,
+    "dezessete": 17, "dezoito": 18, "dezanove": 19, "dezenove": 19,
+    "vinte": 20,
+}
+
+
+def _singularize(word: str) -> str:
+    """Aproximação simples ao singular em português (suficiente para matching)."""
+    w = word
+    if len(w) <= 3:
+        return w
+    for suf, repl in (("oes", "ao"), ("aes", "ao"), ("ais", "al"), ("eis", "el"), ("ois", "ol"), ("uis", "ul")):
+        if w.endswith(suf):
+            return w[: -len(suf)] + repl
+    if w.endswith("ns"):
+        return w[:-2] + "m"
+    if w.endswith("zes") or w.endswith("res") or w.endswith("ses") and not w.endswith("esses"):
+        return w[:-2]
+    if w.endswith("s") and not w.endswith("ss"):
+        return w[:-1]
+    return w
+
+
+def _tokenize(texto: str) -> List[str]:
+    """Divide o texto em palavras, ignorando pontuação (vírgulas, pontos de
+    interrogação/exclamação, parênteses, etc.) para que "guitarra??" ou
+    "pontual," sejam reconhecidos como "guitarra" e "pontual"."""
+    norm = _normalize(texto)
+    return re.findall(r"[a-z0-9]+", norm)
+
+
+def _canonical_phrase(phrase: str) -> str:
+    norm = _normalize(phrase)
+    return " ".join(_singularize(p) for p in norm.split(" ") if p)
+
+
+def _match_from_catalog(
+    tokens: List[str],
+    catalogo: List[str],
+    max_ngram: int = 1,
+    limiar_fuzzy: float = 0.82,
+) -> Optional[str]:
+    """Procura, nos tokens da frase, o item do catálogo mais provável.
+
+    Tenta primeiro correspondência exata (após normalizar/singularizar),
+    preferindo n-gramas mais compridos (mais específicos), e só recorre a
+    fuzzy matching (para tolerar gralhas) se não houver correspondência exata.
+    """
+    if not catalogo or not tokens:
+        return None
+
+    canonicos: Dict[str, str] = {}
+    normalizados: Dict[str, str] = {}
+    for item in catalogo:
+        canonicos.setdefault(_canonical_phrase(item), item)
+        normalizados.setdefault(_normalize(item), item)
+
+    n_tokens = len(tokens)
+    max_n = min(max_ngram, n_tokens)
+
+    for n in range(max_n, 0, -1):
+        for i in range(0, n_tokens - n + 1):
+            frase = " ".join(tokens[i : i + n])
+            canon = _canonical_phrase(frase)
+            if canon in canonicos:
+                return canonicos[canon]
+
+    melhor_item: Optional[str] = None
+    melhor_score = 0.0
+    for n in range(max_n, 0, -1):
+        for i in range(0, n_tokens - n + 1):
+            frase_norm = _normalize(" ".join(tokens[i : i + n]))
+            for item_norm, item_original in normalizados.items():
+                ratio = _safe_ratio(frase_norm, item_norm)
+                if ratio > melhor_score and ratio >= limiar_fuzzy:
+                    melhor_score = ratio
+                    melhor_item = item_original
+    return melhor_item
+
+
+def _extrair_instrumento(tokens: List[str], instrumentos_conhecidos: List[str]) -> Optional[str]:
+    # 1) papéis/aliases comuns ("guitarrista", "baterista", "vocalista", plurais incluídos)
+    for tok in tokens:
+        chave = INSTRUMENT_ALIASES.get(_singularize(tok))
+        if chave:
+            for item in instrumentos_conhecidos:
+                if _instrument_key(item) == chave:
+                    return item
+            return chave.capitalize()
+
+    # 2) nome do instrumento diretamente do catálogo (ex.: "guitarra", "piano")
+    return _match_from_catalog(tokens, instrumentos_conhecidos, max_ngram=2, limiar_fuzzy=0.82)
+
+
+def _extrair_localizacao(tokens: List[str]) -> Optional[str]:
+    return _match_from_catalog(tokens, DISTRITOS_PT, max_ngram=3, limiar_fuzzy=0.8)
+
+
+def _extrair_caracteristicas(tokens: List[str], caracteristicas_conhecidas: List[str]) -> List[str]:
+    if not caracteristicas_conhecidas or not tokens:
+        return []
+
+    canonicos: Dict[str, str] = {}
+    normalizados: Dict[str, str] = {}
+    for item in caracteristicas_conhecidas:
+        canonicos.setdefault(_canonical_phrase(item), item)
+        normalizados.setdefault(_normalize(item), item)
+
+    encontradas: List[str] = []
+    usados_idx: set = set()
+    n_tokens = len(tokens)
+    max_n = min(2, n_tokens)
+
+    for n in range(max_n, 0, -1):
+        for i in range(0, n_tokens - n + 1):
+            if any(idx in usados_idx for idx in range(i, i + n)):
+                continue
+            frase = " ".join(tokens[i : i + n])
+            canon = _canonical_phrase(frase)
+            item = canonicos.get(canon)
+            if not item:
+                frase_norm = _normalize(frase)
+                for item_norm, item_original in normalizados.items():
+                    if _safe_ratio(frase_norm, item_norm) >= 0.86:
+                        item = item_original
+                        break
+            if item and item not in encontradas:
+                encontradas.append(item)
+                usados_idx.update(range(i, i + n))
+
+    return encontradas
+
+
+def _extrair_anos_experiencia(tokens: List[str]) -> Optional[int]:
+    for i, tok in enumerate(tokens):
+        if _singularize(tok) != "ano":
+            continue
+        seguinte = tokens[i + 1 : i + 3]
+        if "idade" in seguinte:
+            continue
+        janela = tokens[max(0, i - 3) : i]
+        for cand in reversed(janela):
+            if cand.isdigit():
+                return int(cand)
+            if cand in NUMEROS_EXTENSO:
+                return NUMEROS_EXTENSO[cand]
+    return None
+
+
+def interpretar_texto(
+    texto: str,
+    instrumentos_conhecidos: Optional[List[str]] = None,
+    caracteristicas_conhecidas: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    tokens = _tokenize(texto or "")
+    return {
+        "instrumento": _extrair_instrumento(tokens, instrumentos_conhecidos or []),
+        "localizacao": _extrair_localizacao(tokens),
+        "anos_experiencia": _extrair_anos_experiencia(tokens),
+        "caracteristicas": _extrair_caracteristicas(tokens, caracteristicas_conhecidas or []),
+    }
+
 
 @dataclass
 class Preferencias:
@@ -205,7 +501,7 @@ class Matcher:
         return (None, None, 0.0)
 
     def _localizacao_match(self, musico: Dict[str, Any], localizacao: str, relax: bool) -> bool:
-        ratio = _safe_ratio(musico.get("localizacao", ""), localizacao)
+        ratio = _localizacao_ratio(musico.get("localizacao", ""), localizacao)
         return ratio >= (0.75 if relax else 0.85)
 
     def _satisfaz_constraints_1(self, musico: Dict[str, Any], prefs: Preferencias, relax: bool) -> bool:
@@ -260,7 +556,7 @@ class Matcher:
                 score += 0.5 * detalhes["anos_experiencia"]
 
         if prefs.localizacao:
-            r = _safe_ratio(musico.get("localizacao", ""), prefs.localizacao)
+            r = _localizacao_ratio(musico.get("localizacao", ""), prefs.localizacao)
             detalhes["localizacao"] = round(r, 3)
             score += 2.5 * r
 
@@ -347,14 +643,38 @@ class CSP1Solver:
         )
 
         musicos_exatos = self._run_csp(prefs, relax=False, only_instrument=only_instrument, max_resultados=max_resultados)
-        resultados: List[Tuple[Dict[str, Any], bool]] = [(m, True) for m in musicos_exatos]
+        resultados: List[Tuple[Dict[str, Any], bool, bool]] = [(m, True, True) for m in musicos_exatos]
 
         if not resultados:
             musicos_relax = self._run_csp(prefs, relax=True, only_instrument=only_instrument, max_resultados=max_resultados)
-            resultados = [(m, False) for m in musicos_relax]
+            resultados = [(m, False, True) for m in musicos_relax]
+
+        if not resultados and self.m.musicos:
+            # Nenhum músico cumpre os critérios, nem sequer relaxados: em vez de
+            # devolver "não há nada", ancoramos no instrumento pedido (o
+            # critério mais importante) e mostramos todos os que o tocam,
+            # ignorando distrito/anos/características. Só se nem isso existir
+            # é que mostramos todos os músicos, como último recurso.
+            if prefs.instrumento:
+                candidatos = [
+                    mus for mus in self.m.musicos
+                    if self.m._instrumento_match(mus, prefs.instrumento, relax=True)
+                ]
+            else:
+                candidatos = []
+
+            if not candidatos:
+                candidatos = list(self.m.musicos)
+
+            candidatos = sorted(
+                candidatos,
+                key=lambda mus: self.m._pontuacao_1(mus, prefs)["score_total"],
+                reverse=True,
+            )
+            resultados = [(m, False, False) for m in candidatos[:max_resultados]]
 
         out: List[Dict[str, Any]] = []
-        for mus, exato in resultados[:max_resultados]:
+        for mus, exato, proximo in resultados[:max_resultados]:
             det = self.m._pontuacao_1(mus, prefs)
             score = det["score_total"]
 
@@ -370,7 +690,7 @@ class CSP1Solver:
 
             local_ratio = None
             if prefs.localizacao:
-                local_ratio = _safe_ratio(mus.get("localizacao", ""), prefs.localizacao)
+                local_ratio = _localizacao_ratio(mus.get("localizacao", ""), prefs.localizacao)
 
             inst_match = True
             inst_nome = None
@@ -389,6 +709,7 @@ class CSP1Solver:
                     "localizacao": mus.get("localizacao"),
                     "score": score,
                     "exato": exato,
+                    "proximo": proximo,
                     "anos_diff": anos_diff,
                     "localizacao_ratio": local_ratio,
                     "instrumento_match": inst_match,
@@ -401,7 +722,7 @@ class CSP1Solver:
                 }
             )
 
-        out.sort(key=lambda item: (item["exato"], item["score"]), reverse=True)
+        out.sort(key=lambda item: (item["exato"], item["proximo"], item["score"]), reverse=True)
         return out
 
 class BandCSPSolver:
@@ -462,7 +783,7 @@ class BandCSPSolver:
             return True
         ref = members[0].get("localizacao", "")
         for m in members[1:]:
-            if _safe_ratio(m.get("localizacao", ""), ref) < (0.75 if relax else 0.85):
+            if _localizacao_ratio(m.get("localizacao", ""), ref) < (0.75 if relax else 0.85):
                 return False
         return True
 
@@ -717,11 +1038,39 @@ if __name__ == "__main__":
         sys.exit(0)
 
     musicos = payload.get("musicos", [])
-    pref_data = payload.get("preferencias", {}) or {}
+    pref_data = dict(payload.get("preferencias", {}) or {})
     max_resultados = payload.get("max_resultados", 10)
+
+    texto = payload.get("texto")
+    interpretado = None
+    if texto:
+        interpretado = interpretar_texto(
+            texto,
+            instrumentos_conhecidos=payload.get("instrumentos_conhecidos") or [],
+            caracteristicas_conhecidas=payload.get("caracteristicas_conhecidas") or [],
+        )
+        # campos explícitos (ex.: filtros manuais) têm sempre prioridade sobre o texto livre
+        if pref_data.get("instrumento") is None and interpretado["instrumento"]:
+            pref_data["instrumento"] = interpretado["instrumento"]
+        if pref_data.get("localizacao") is None and interpretado["localizacao"]:
+            pref_data["localizacao"] = interpretado["localizacao"]
+        if pref_data.get("anos_experiencia") is None and interpretado["anos_experiencia"] is not None:
+            pref_data["anos_experiencia"] = interpretado["anos_experiencia"]
+        if not pref_data.get("caracteristicas") and interpretado["caracteristicas"]:
+            pref_data["caracteristicas"] = interpretado["caracteristicas"]
 
     preferencias = _preferencias_from_payload(pref_data)
 
     matcher = CSPMatcherFacade(musicos)
     sugestoes = matcher.resolver(preferencias, max_resultados=max_resultados)
-    json.dump({"resultados": sugestoes}, sys.stdout, ensure_ascii=False)
+
+    resposta: Dict[str, Any] = {"resultados": sugestoes}
+    if interpretado is not None:
+        resposta["interpretado"] = interpretado
+        resposta["preferencias_efetivas"] = {
+            "instrumento": pref_data.get("instrumento"),
+            "anos_experiencia": pref_data.get("anos_experiencia"),
+            "localizacao": pref_data.get("localizacao"),
+            "caracteristicas": pref_data.get("caracteristicas") or [],
+        }
+    json.dump(resposta, sys.stdout, ensure_ascii=False)

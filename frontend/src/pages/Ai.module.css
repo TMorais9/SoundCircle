@@ -5,7 +5,7 @@
     justify-content: flex-start;
     width: 100%;
     min-height: 100%;
-    padding: 24px 24px 40px;
+    padding: 40px 24px 40px;
     box-sizing: border-box;
     color: #222;
     font-family: "Poppins", sans-serif;
@@ -30,6 +30,7 @@
 
 .aiContainer {
     width: 100%;
+    height: 100%;
     max-width: 1200px;
     background: rgba(255, 255, 255, 0.26);
     border-radius: 24px;
@@ -166,45 +167,6 @@
     padding: 14px;
 }
 
-.filterRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.filterField { display: flex; flex-direction: column; gap: 5px; }
-
-.filterField label {
-    font-size: 11px;
-    font-weight: 700;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-}
-
-.filterField input,
-.filterField select {
-    border: 1.5px solid rgba(255, 88, 35, 0.18);
-    border-radius: 10px;
-    padding: 9px 12px;
-    background: #fff;
-    outline: none;
-    font-family: "Poppins", sans-serif;
-    font-size: 14px;
-    color: #222;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.filterField select {
-    padding-right: 32px;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23ff5823' d='M1 1l5 6 5-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 10px 7px;
-    cursor: pointer;
-}
-
-.filterField input:focus, .filterField select:focus {
-    border-color: rgba(255, 88, 35, 0.55);
-    box-shadow: 0 0 0 3px rgba(255, 88, 35, 0.1);
-}
-
 .traitsBlock { display: flex; flex-direction: column; gap: 8px; }
 
 .traitsHeader {
@@ -256,7 +218,26 @@
     flex-shrink: 0;
 }
 
-.filtersPanelInline { display: flex; flex-direction: column; gap: 10px; }
+.chatInputRow { display: flex; width: 100%; }
+
+.chatTextInput {
+    width: 100%;
+    border: 1.5px solid rgba(255, 88, 35, 0.25);
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: #fff;
+    outline: none;
+    font-family: "Poppins", sans-serif;
+    font-size: 14px;
+    color: #222;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chatTextInput:focus {
+    border-color: rgba(255, 88, 35, 0.6);
+    box-shadow: 0 0 0 3px rgba(255, 88, 35, 0.12);
+}
+
 .textAndButton { display: flex; width: 100%; }
 
 .textAndButton button {
@@ -283,5 +264,4 @@
 @media (max-width: 600px) {
     .aiPage { padding: 16px; }
     .aiContainer { min-height: 62vh; padding: 14px; }
-    .filterRow { grid-template-columns: 1fr; }
 }

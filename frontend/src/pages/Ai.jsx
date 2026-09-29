@@ -9,13 +9,11 @@ function Ai() {
     const [messages, setMessages] = useState([
         {
             remetente: "ai",
-            texto: "Olá 👋 Sou o teu assistente virtual. Diz-me o que procuras para te ajudar!",
+            texto: "Olá 👋 Sou o teu assistente virtual. Diz-me o que procuras!",
             matches: [],
         },
     ]);
-    const [instrumento, setInstrumento] = useState("");
-    const [anosExperiencia, setAnosExperiencia] = useState("");
-    const [localizacao, setLocalizacao] = useState("");
+    const [texto, setTexto] = useState("");
     const [caracteristicasDisponiveis, setCaracteristicasDisponiveis] = useState([]);
     const [caracteristicasSelecionadas, setCaracteristicasSelecionadas] = useState([]);
     const [loadingMatch, setLoadingMatch] = useState(false);
@@ -53,53 +51,20 @@ function Ai() {
         );
     };
 
-    const instrumentOptions = [
-        { value: "", label: "Qualquer" },
-        { value: "Voz", label: "Vocalista" },
-        { value: "Guitarra", label: "Guitarrista" },
-        { value: "Baixo", label: "Baixista" },
-        { value: "Bateria", label: "Baterista" },
-        { value: "Piano", label: "Pianista" },
-    ];
-
-    const buildPreferences = () => {
-        const selectedTraits = caracteristicasDisponiveis
-            .filter((trait) => caracteristicasSelecionadas.includes(trait.id))
-            .map((trait) => trait.nome);
-
-        return {
-            instrumento: instrumento.trim() || null,
-            anosExperiencia: anosExperiencia !== "" ? Number(anosExperiencia) : null,
-            localizacao: localizacao.trim() || null,
-            caracteristicas: selectedTraits,
-            userId: currentUserId,
-        };
-    };
-
-    const formatResponse = (matches, prefs, counts = {}) => {
+    const formatResponse = (matches, counts = {}) => {
         const exactCount = counts.exactCount ?? matches.filter((m) => m.exato).length;
         const similarCount = counts.similarCount ?? Math.max(0, matches.length - exactCount);
-        const introParts = [];
-        if (prefs.instrumento) introParts.push(`instrumento ${prefs.instrumento}`);
-        if (prefs.anosExperiencia) introParts.push(`${prefs.anosExperiencia} anos de experiência`);
-        if (prefs.localizacao) introParts.push(`perto de ${prefs.localizacao}`);
-        if (prefs.caracteristicas?.length) introParts.push(`características: ${prefs.caracteristicas.join(", ")}`);
-
-        const baseContext =
-            introParts.length > 0
-                ? `para ${introParts.join(" · ")}`
-                : "para o teu pedido";
 
         let intro = "";
         if (!matches.length) {
-            intro = `Não encontrei exatamente o que pediste, mas estas pessoas podem-se encaixar no que procuras ${baseContext}.`;
+            intro = "Ainda não tenho músicos suficientes na base de dados para sugerir alguém.";
         } else if (exactCount > 0) {
-            intro = `Encontrei ${exactCount} perfis que cumprem exatamente o que pediste ${baseContext}.`;
+            intro = `Encontrei ${exactCount} perfis que cumprem exatamente o que pediste.`;
             if (similarCount > 0) {
                 intro += ` Também tenho ${similarCount} perfis semelhantes que podem encaixar.`;
             }
         } else {
-            intro = `Não encontrei exatamente o que pediste, mas estas pessoas podem-se encaixar no que procuras ${baseContext}.`;
+            intro = "Não encontrei ninguém que cumpra exatamente esses critérios, mas estes são os perfis mais próximos que tenho.";
         }
 
         const listItems = matches.map((m) => {
@@ -111,7 +76,7 @@ function Ai() {
                 m.instrumento_anos ??
                 m.instrumentos?.[0]?.anos_experiencia;
             const anosTxt = anos || anos === 0 ? `${anos} anos` : "anos n/d";
-            const modo = m.exato ? "exato" : "semelhante";
+            const modo = m.exato ? "exato" : m.proximo === false ? "outra opção" : "semelhante";
 
             const roleNorm = role?.toLowerCase() || "";
             const isBanda = roleNorm.includes("banda");
@@ -133,37 +98,97 @@ function Ai() {
         return { intro, listItems };
     };
 
+    const normalizeSimples = (texto) =>
+        (texto || "")
+            .toString()
+            .normalize("NFD")
+            .replace(/[̀-ͯ]/g, "")
+            .toLowerCase()
+            .trim();
+
+    const PAPEL_PARA_INSTRUMENTO = {
+        guitarrista: "guitarra",
+        guitarra: "guitarra",
+        baixista: "baixo",
+        baixo: "baixo",
+        baterista: "bateria",
+        bateria: "bateria",
+        pianista: "piano",
+        piano: "piano",
+    };
+
+    const PAPEIS_VOCAIS = new Set(["vocalista", "voz", "cantor", "cantora"]);
+
+    // Na base de dados o "instrumento" de um vocalista é um papel ("Vocalista"),
+    // não algo que se "toque" — por isso a frase tem de ser diferente da dos
+    // instrumentistas (ex.: "cantam" em vez de "tocam Vocalista").
+    const formatDisponibilidadePorInstrumento = (instrumentoUsado) => {
+        if (!instrumentoUsado) return "outros músicos disponíveis";
+        const norm = normalizeSimples(instrumentoUsado);
+        if (PAPEIS_VOCAIS.has(norm)) {
+            return "todos os vocalistas disponíveis";
+        }
+        const nomeInstrumento = PAPEL_PARA_INSTRUMENTO[norm] || instrumentoUsado.toLowerCase();
+        return `todos os músicos que tocam ${nomeInstrumento} disponíveis`;
+    };
+
+    const formatInterpretado = (interpretado) => {
+        if (!interpretado) return "";
+        const parts = [];
+        if (interpretado.instrumento) parts.push(`instrumento ${interpretado.instrumento}`);
+        if (interpretado.localizacao) parts.push(`distrito ${interpretado.localizacao}`);
+        if (interpretado.anos_experiencia != null) parts.push(`${interpretado.anos_experiencia} anos de experiência`);
+        if (interpretado.caracteristicas?.length) parts.push(`características: ${interpretado.caracteristicas.join(", ")}`);
+        return parts.length ? `Percebi que procuras: ${parts.join(" · ")}.` : "";
+    };
+
     const handleSend = (e) => {
         e?.preventDefault?.();
         if (loadingMatch) return;
 
-        const prefs = buildPreferences();
-        const userText = `Instrumento: ${prefs.instrumento || "qualquer"}, Anos: ${prefs.anosExperiencia || "qualquer"}, Localização: ${prefs.localizacao || "qualquer"}`;
-        const newMessage = { remetente: "user", texto: userText };
-        setMessages((prev) => [...prev, newMessage]);
+        const mensagem = texto.trim();
+        const selectedTraits = caracteristicasDisponiveis
+            .filter((trait) => caracteristicasSelecionadas.includes(trait.id))
+            .map((trait) => trait.nome);
+
+        if (!mensagem && selectedTraits.length === 0) return;
+
+        const displayText = mensagem || `Características: ${selectedTraits.join(", ")}`;
+        setMessages((prev) => [...prev, { remetente: "user", texto: displayText }]);
+        setTexto("");
 
         (async () => {
             try {
                 setLoadingMatch(true);
-                const data = await AiAPI.matchMusicos({
-                    instrumento: prefs.instrumento,
-                    anosExperiencia: prefs.anosExperiencia,
-                    localizacao: prefs.localizacao,
-                    caracteristicas: prefs.caracteristicas,
-                    userId: prefs.userId,
+                const data = await AiAPI.chatMusicos({
+                    texto: mensagem,
+                    userId: currentUserId,
+                    caracteristicas: selectedTraits,
                 });
                 const matches = data?.matches || [];
-                const noResultsMessage =
-                    (!matches.length && data?.message) ||
-                    null;
+                const interpretado = data?.interpretado || {};
                 const counts = {
                     exactCount: data?.exactCount ?? matches.filter((m) => m.exato).length,
                     similarCount: data?.similarCount ?? 0,
                 };
-                const formatted = formatResponse(matches, prefs, counts);
+                const formatted = formatResponse(matches, counts);
+
+                let respostaTexto;
+                if (data?.message) {
+                    respostaTexto = data.message;
+                } else if (data?.entendiNada) {
+                    respostaTexto =
+                        "Não percebi bem instrumento, distrito, anos de experiência ou características no que escreveste, mas aqui tens alguns músicos para começares a explorar.";
+                } else if (data?.semNenhumProximo) {
+                    respostaTexto = `Não encontrei ninguém com essas características, nem próximo delas. Aqui tens ${formatDisponibilidadePorInstrumento(data.instrumentoUsado)}.`;
+                } else {
+                    const entendiLinha = formatInterpretado(interpretado);
+                    respostaTexto = entendiLinha ? `${entendiLinha} ${formatted.intro}` : formatted.intro;
+                }
+
                 const respostaAI = {
                     remetente: "ai",
-                    texto: noResultsMessage || formatted.intro,
+                    texto: respostaTexto,
                     listItems: formatted.listItems,
                     matches: matches.map((m) => ({ id: m.id, nome: m.nome })),
                 };
@@ -171,7 +196,7 @@ function Ai() {
             } catch (error) {
                 const respostaAI = {
                     remetente: "ai",
-                    texto: error.message || "Não consegui gerar sugestões agora. Tenta mais tarde.",
+                    texto: error.message || "Não consegui perceber o teu pedido agora. Tenta reformular.",
                     matches: [],
                     listItems: [],
                 };
@@ -226,67 +251,40 @@ function Ai() {
                     </div>
 
                     <form className={styles.aiInputArea} onSubmit={handleSend}>
-                        <div className={styles.filtersPanelInline}>
-                            <div className={styles.filterRow}>
-                                <div className={styles.filterField}>
-                                    <label>Instrumento</label>
-                                    <select
-                                        value={instrumento}
-                                        onChange={(e) => setInstrumento(e.target.value)}
-                                    >
-                                        {instrumentOptions.map((opt) => (
-                                            <option key={opt.value || "qualquer"} value={opt.value}>
-                                                {opt.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className={styles.filterField}>
-                                    <label>Anos de experiência</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        placeholder="Ex: 3"
-                                        value={anosExperiencia}
-                                        onChange={(e) => setAnosExperiencia(e.target.value)}
-                                    />
-                                </div>
-                                <div className={styles.filterField}>
-                                    <label>Localização</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Ex: Lisboa, Porto..."
-                                        value={localizacao}
-                                        onChange={(e) => setLocalizacao(e.target.value)}
-                                    />
-                                </div>
+                        <div className={styles.chatInputRow}>
+                            <input
+                                type="text"
+                                className={styles.chatTextInput}
+                                placeholder='Escreve o que procuras... ex: "baterista em Coimbra, 3 anos, pontual e criativo"'
+                                value={texto}
+                                onChange={(e) => setTexto(e.target.value)}
+                            />
+                        </div>
+                        <div className={styles.traitsBlock}>
+                            <div className={styles.traitsHeader}>
+                                <span>Características (opcional, clica para adicionar ao pedido)</span>
+                                {loadError && <small className={styles.errorText}>{loadError}</small>}
                             </div>
-                            <div className={styles.traitsBlock}>
-                                <div className={styles.traitsHeader}>
-                                    <span>Características</span>
-                                    {loadError && <small className={styles.errorText}>{loadError}</small>}
-                                </div>
-                                <div className={styles.traitsChips}>
-                                    {caracteristicasDisponiveis.map((trait) => (
-                                        <button
-                                            key={trait.id}
-                                            type="button"
-                                            className={`${styles.traitChip} ${
-                                                caracteristicasSelecionadas.includes(trait.id)
-                                                    ? styles.traitChipActive
-                                                    : ""
-                                            }`}
-                                            onClick={() => toggleCaracteristica(trait.id)}
-                                        >
-                                            {trait.nome}
-                                        </button>
-                                    ))}
-                                </div>
+                            <div className={styles.traitsChips}>
+                                {caracteristicasDisponiveis.map((trait) => (
+                                    <button
+                                        key={trait.id}
+                                        type="button"
+                                        className={`${styles.traitChip} ${
+                                            caracteristicasSelecionadas.includes(trait.id)
+                                                ? styles.traitChipActive
+                                                : ""
+                                        }`}
+                                        onClick={() => toggleCaracteristica(trait.id)}
+                                    >
+                                        {trait.nome}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                         <div className={styles.textAndButton}>
                             <button type="submit" disabled={loadingMatch}>
-                                {loadingMatch ? "A procurar..." : "Procurar"}
+                                {loadingMatch ? "A procurar..." : "Enviar"}
                             </button>
                         </div>
                     </form>

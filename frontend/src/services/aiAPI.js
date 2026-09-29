@@ -18,7 +18,7 @@ async function request(path, { method = "GET", body } = {}) {
 }
 
 const AiAPI = {
-    matchMusicos: (payload) => request("/ai/match", { method: "POST", body: payload }),
+    chatMusicos: (payload) => request("/ai/chat", { method: "POST", body: payload }),
 };
 
 export default AiAPI;
