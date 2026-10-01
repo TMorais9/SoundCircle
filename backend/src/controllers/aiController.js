@@ -129,10 +129,6 @@ const enrichMatch = (m) => {
   };
 };
 
-// Usado pelo chat: confia sempre na ordenação/pontuação que já vem do motor
-// CSP (backend/ai/ai.py), sem voltar a filtrar por thresholds. O motor já
-// garante que, mesmo sem nenhum músico a cumprir os critérios, devolve os
-// mais parecidos — por isso aqui nunca descartamos esses resultados.
 const buildChatResults = (resultados, maxTotal = 8) => {
   const ordenados = resultados.slice(0, maxTotal).map(enrichMatch);
   const exactCount = ordenados.filter((r) => r.exato).length;
@@ -290,8 +286,6 @@ exports.chat = async (req, res) => {
 
   const mensagem = typeof texto === 'string' ? texto.trim() : '';
 
-  // filtros manuais (opcionais, ex.: chips de características) têm sempre
-  // prioridade sobre o que for extraído do texto livre
   const parsedYears = Number(anosExperiencia);
   const preferenciasExplicitas = {
     instrumento: canonicalizeInstrument(instrumento || null),
@@ -347,14 +341,8 @@ exports.chat = async (req, res) => {
       interpretado.anos_experiencia == null &&
       (!interpretado.caracteristicas || interpretado.caracteristicas.length === 0);
 
-    // O motor CSP (ai.py) garante sempre os candidatos mais parecidos, mesmo
-    // que nenhum cumpra exatamente os critérios, por isso só fica vazio se
-    // não houver músicos de todo (já tratado acima).
     const { matches: enrichedMatches, exactCount, similarCount } = buildChatResults(resultados);
 
-    // Se nenhum resultado é sequer "próximo" (ai.py só chega aqui quando não
-    // há correspondência nem relaxada), o motor ancorou no instrumento
-    // pedido para não mostrar músicos sem qualquer relação com o pedido.
     const semNenhumProximo =
       !entendiNada && enrichedMatches.length > 0 && enrichedMatches.every((m) => m.proximo === false);
 
