@@ -140,7 +140,8 @@
 
 .matchMeta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; color: #666; }
 
-.matchItem button {
+.matchItem button,
+.bandMember button {
     align-self: flex-start;
     background: linear-gradient(135deg, #ff5823, #ff7434);
     border: none;
@@ -155,7 +156,50 @@
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.matchItem button:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(255, 88, 35, 0.36); }
+.matchItem button:hover,
+.bandMember button:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(255, 88, 35, 0.36); }
+
+.bandsList { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+
+.bandItem {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 88, 35, 0.12);
+    border-radius: 14px;
+    padding: 10px 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bandMembers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+.bandMember {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.bandMember button { align-self: center; }
+
+.memberRole {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #ff5823;
+}
+
+.memberInfo { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.bandMemberFixo {
+    background: rgba(255, 88, 35, 0.08);
+    border: 1px dashed rgba(255, 88, 35, 0.3);
+}
 
 .filtersPanel {
     display: flex;
@@ -264,4 +308,9 @@
 @media (max-width: 600px) {
     .aiPage { padding: 16px; }
     .aiContainer { min-height: 62vh; padding: 14px; }
+    .bandMember { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+    .bandMember button { justify-self: start; margin-top: 4px; }
+    .memberInfo { overflow-wrap: anywhere; }
+    .traitsChips { flex-wrap: nowrap; overflow-x: auto; max-height: none; padding-bottom: 4px; min-width: 0; contain: inline-size; }
+    .traitChip { flex-shrink: 0; }
 }

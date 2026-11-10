@@ -1,9 +1,13 @@
+// Controller da parte de AI.
+// Não faz a procura: vai buscar os dados à base de dados, prepara-os no formato que o algoritmo espera,
+// chama o script Python (backend/ai/ai.py), onde está o CSP, e devolve a resposta ao frontend.
 const path = require('path');
 const { spawn } = require('child_process');
 const User = require('../models/userModel');
 const Instrumento = require('../models/instrumentoModel');
 const Caracteristica = require('../models/caracteristicaModel');
 
+// Transforma as funções dos models (que usam callbacks) em promessas, para podermos usar await.
 const runQuery = (fn, ...args) =>
   new Promise((resolve, reject) => {
     fn(...args, (err, result) => {
@@ -12,6 +16,8 @@ const runQuery = (fn, ...args) =>
     });
   });
 
+// Os instrumentos vêm da base de dados numa só string ("Guitarrista::10::profissional||...").
+// Aqui passam a uma lista de objetos com nome, anos de experiência e nível.
 const parseInstrumentos = (raw) => {
   if (!raw) return [];
   return raw
@@ -30,11 +36,15 @@ const parseInstrumentos = (raw) => {
     .filter((inst) => inst.nome);
 };
 
+// As características também vêm numa só string, separadas por ||.
 const parseCaracteristicas = (raw) => {
   if (!raw) return [];
   return raw.split('||').filter(Boolean);
 };
 
+// Lista de músicos que entra no CSP (é o domínio das variáveis).
+// Ficam de fora o próprio utilizador e as contas de banda. Os anos de experiência gerais são os do
+// instrumento com menos anos, para não exagerar a experiência de ninguém.
 const buildMusicians = (rows, ignoreUserId) =>
   rows
     .filter((row) => !ignoreUserId || Number(row.id) !== Number(ignoreUserId))
@@ -56,6 +66,35 @@ const buildMusicians = (rows, ignoreUserId) =>
       };
     });
 
+// Perfil de quem está a pedir: instrumentos, distrito e características.
+// O algoritmo usa-o ao formar uma banda (os teus lugares, a localização e a afinidade com os outros).
+const buildProfile = (rows, userId) => {
+  if (!userId) return null;
+  const row = rows.find((r) => Number(r.id) === Number(userId));
+  if (!row) return null;
+  const [perfil] = buildMusicians([row]);
+  return perfil || null;
+};
+
+// Contas do tipo banda, usadas quando o utilizador quer entrar numa banda já formada.
+const buildBands = (rows, ignoreUserId) =>
+  rows
+    .filter((row) => !ignoreUserId || Number(row.id) !== Number(ignoreUserId))
+    .filter((row) => (row.tipo || '').toLowerCase() === 'banda')
+    .map((row) => {
+      const fundacao = row.data_nascimento ? new Date(row.data_nascimento) : null;
+      return {
+        id: row.id,
+        nome: row.nome,
+        localizacao: row.localizacao,
+        caracteristicas: parseCaracteristicas(row.caracteristicas_raw),
+        instrumentos: [],
+        desde: fundacao && !Number.isNaN(fundacao.getTime()) ? fundacao.getFullYear() : null,
+      };
+    });
+
+// Corre o algoritmo: lança o ai.py, envia o pedido em JSON pelo stdin e lê a resposta no stdout.
+// Se o Python falhar ou devolver algo inválido, o erro passa para quem chamou.
 const runPythonScript = (payload) =>
   new Promise((resolve, reject) => {
     const pythonBin = process.env.PYTHON_BIN || 'python3';
@@ -92,9 +131,7 @@ const runPythonScript = (payload) =>
     child.stdin.end();
   });
 
-const runPythonMatcher = (musicos, preferencias) =>
-  runPythonScript({ musicos, preferencias, max_resultados: 10 }).then((parsed) => parsed.resultados);
-
+// Normaliza o nome de um instrumento enviado explicitamente ("baterista" e "bateria" ficam iguais).
 const canonicalizeInstrument = (raw) => {
   const trimmed = typeof raw === 'string' ? raw.trim() : '';
   if (!trimmed) return null;
@@ -112,10 +149,17 @@ const canonicalizeInstrument = (raw) => {
     cantor: 'voz',
     cantora: 'voz',
     voz: 'voz',
+    violinista: 'violino',
+    violino: 'violino',
+    saxofonista: 'saxofone',
+    saxofone: 'saxofone',
+    teclista: 'teclado',
+    teclado: 'teclado',
   };
   return aliases[norm] || trimmed;
 };
 
+// Garante que cada músico devolvido tem o nome e os anos do instrumento, para a página mostrar.
 const enrichMatch = (m) => {
   const instrumentos = Array.isArray(m.instrumentos) ? m.instrumentos : [];
   const firstInst = instrumentos[0] || {};
@@ -129,6 +173,7 @@ const enrichMatch = (m) => {
   };
 };
 
+// Conta quantos resultados são exatos e quantos semelhantes. A ordem é a que o CSP devolveu.
 const buildChatResults = (resultados, maxTotal = 8) => {
   const ordenados = resultados.slice(0, maxTotal).map(enrichMatch);
   const exactCount = ordenados.filter((r) => r.exato).length;
@@ -139,84 +184,7 @@ const buildChatResults = (resultados, maxTotal = 8) => {
   };
 };
 
-const classifyMatches = (resultados, preferencias) => {
-  const onlyInstrument =
-    !!preferencias.instrumento &&
-    preferencias.anos_experiencia == null &&
-    !preferencias.localizacao &&
-    (!preferencias.caracteristicas || preferencias.caracteristicas.length === 0);
-
-  const filtrados = onlyInstrument
-    ? resultados.filter((r) => r.instrumento_match === true || (r.instrumento_score ?? 0) >= 0.78)
-    : resultados;
-
-  const normalizados = filtrados.map((r) => {
-    const instOk =
-      !preferencias.instrumento ||
-      r.instrumento_match === true ||
-      (r.instrumento_score ?? 0) >= 0.75;
-
-    const anosStrict =
-      preferencias.anos_experiencia == null ||
-      (r.anos_diff != null && Number(r.anos_diff) === 0);
-
-    const anosRelax =
-      preferencias.anos_experiencia == null ||
-      r.anos_diff == null ||
-      Number(r.anos_diff) <= 4;
-
-    const locStrict =
-      !preferencias.localizacao ||
-      (r.localizacao_ratio ?? 0) >= 0.85;
-
-    const locRelax =
-      !preferencias.localizacao ||
-      (r.localizacao_ratio ?? 0) >= 0.7;
-
-    const shouldBeExact =
-      (onlyInstrument && instOk) ||
-      (instOk && anosStrict && locStrict);
-
-    if (shouldBeExact) {
-      return { ...r, exato: true, instrumento_match: true };
-    }
-
-    return {
-      ...r,
-      _instOk: instOk,
-      _anosRelax: anosRelax,
-      _locRelax: locRelax,
-    };
-  });
-
-  const exatos = normalizados.filter((r) => r.exato);
-
-  const similares = normalizados
-    .filter((r) => !exatos.includes(r))
-    .filter((r) => {
-      const instOk = r._instOk ?? (!preferencias.instrumento || r.instrumento_match === true || (r.instrumento_score ?? 0) >= 0.75);
-      const anosOk =
-        (r._anosRelax ?? false) ||
-        preferencias.anos_experiencia == null ||
-        (r.anos_diff != null && Number(r.anos_diff) <= 4);
-      const locOk =
-        (r._locRelax ?? false) ||
-        !preferencias.localizacao ||
-        (r.localizacao_ratio ?? 0) >= 0.7;
-      return instOk && anosOk && locOk;
-    })
-    .slice(0, 5);
-
-  const matches = [...exatos, ...similares];
-  const enrichedMatches = matches.map(enrichMatch);
-
-  return {
-    matches: enrichedMatches,
-    exactCount: onlyInstrument ? enrichedMatches.length : exatos.length,
-    similarCount: onlyInstrument ? 0 : similares.length,
-  };
-};
-
+// POST /ai/match: pesquisa com filtros explícitos (instrumento, anos, distrito, características ou lista de instrumentos para uma banda).
 exports.match = async (req, res) => {
   const {
     instrumento,
@@ -264,8 +232,17 @@ exports.match = async (req, res) => {
       politica_localizacao_banda: politicaBanda,
     };
 
-    const resultados = await runPythonMatcher(musicos, preferencias);
-    const { matches: enrichedMatches, exactCount, similarCount } = classifyMatches(resultados, preferencias);
+    // o CSP decide tudo, incluindo o rótulo exato/semelhante de cada resultado
+    const parsed = await runPythonScript({
+      musicos,
+      preferencias,
+      perfil: buildProfile(rows, userId),
+      max_resultados: 8,
+    });
+    if (parsed.modo === 'formar_banda') {
+      return res.json({ modo: 'formar_banda', bandas: parsed.resultados, faltas: parsed.faltas || [] });
+    }
+    const { matches: enrichedMatches, exactCount, similarCount } = buildChatResults(parsed.resultados);
 
     if (enrichedMatches.length === 0) {
       return res.status(200).json({
@@ -281,8 +258,11 @@ exports.match = async (req, res) => {
   }
 };
 
+// POST /ai/chat: o chat da página Circle AI.
+// Recebe o texto, os chips de características, o id do utilizador e o contexto da conversa (a banda que
+// está a ser montada), e devolve músicos, bandas para integrar ou propostas de banda.
 exports.chat = async (req, res) => {
-  const { texto, userId, instrumento, anosExperiencia, localizacao, caracteristicas } = req.body || {};
+  const { texto, userId, instrumento, anosExperiencia, localizacao, caracteristicas, contexto } = req.body || {};
 
   const mensagem = typeof texto === 'string' ? texto.trim() : '';
 
@@ -301,11 +281,13 @@ exports.chat = async (req, res) => {
     preferenciasExplicitas.anos_experiencia != null ||
     !!preferenciasExplicitas.caracteristicas;
 
+  // sem texto e sem chips não há nada para procurar
   if (!mensagem && !temFiltroExplicito) {
     return res.status(400).json({ error: 'Escreve o que procuras, ou escolhe pelo menos uma característica, para eu poder ajudar.' });
   }
 
   try {
+    // dados que o algoritmo precisa: utilizadores (músicos e bandas) e os catálogos de instrumentos e características
     const [rows, instrumentosDb, caracteristicasDb] = await Promise.all([
       runQuery(User.getAllWithDetails),
       runQuery(Instrumento.getAll),
@@ -313,28 +295,61 @@ exports.chat = async (req, res) => {
     ]);
 
     const musicos = buildMusicians(rows, userId);
+    const bandas = buildBands(rows, userId);
 
-    if (!musicos.length) {
+    if (!musicos.length && !bandas.length) {
       return res.status(200).json({ matches: [], message: 'Ainda não existem músicos suficientes na base de dados.' });
     }
 
-    const instrumentos_conhecidos = instrumentosDb.map((i) => i.nome).filter(Boolean);
+    // o algoritmo reconhece no texto os instrumentos do catálogo e também os que os músicos registaram (ex.: Violino)
+    const instrumentos_conhecidos = [
+      ...new Set([
+        ...instrumentosDb.map((i) => i.nome),
+        ...musicos.flatMap((m) => m.instrumentos.map((i) => i.nome)),
+      ].filter(Boolean)),
+    ];
     const caracteristicas_conhecidas = caracteristicasDb.map((c) => c.nome).filter(Boolean);
 
+    // aqui corre o algoritmo: interpreta a frase, monta o CSP certo e resolve-o
     const parsed = await runPythonScript({
       musicos,
+      bandas,
       texto: mensagem,
       preferencias: preferenciasExplicitas,
       instrumentos_conhecidos,
       caracteristicas_conhecidas,
-      max_resultados: 10,
+      perfil: buildProfile(rows, userId),
+      max_resultados: 8,
+      max_bandas: 5,
+      contexto: contexto && typeof contexto === 'object' ? contexto : null,
     });
 
     const resultados = parsed.resultados || [];
     const interpretado = parsed.interpretado || {};
     const preferenciasEfetivas = parsed.preferencias_efetivas || {};
 
+    // resposta para bandas (formar uma nova ou integrar uma existente)
+    if (parsed.modo === 'formar_banda' || parsed.modo === 'bandas_existentes') {
+      const exactBandas = resultados.filter((b) => b.exato).length;
+      return res.json({
+        modo: parsed.modo,
+        bandas: resultados,
+        exactCount: exactBandas,
+        similarCount: resultados.length - exactBandas,
+        semNenhumProximo: resultados.length > 0 && resultados.every((b) => b.proximo === false),
+        semInstrumentos: !!parsed.sem_instrumentos,
+        faltas: parsed.faltas || [],
+        papeisSemCandidatos: parsed.papeis_sem_candidatos || [],
+        interpretado,
+        preferenciasEfetivas,
+        contexto: parsed.contexto || null,
+        entendiNada: false,
+      });
+    }
+
+    // resposta para a procura de um músico; entendiNada serve para avisar quando a frase não tinha nada reconhecível
     const entendiNada =
+      !parsed.contexto &&
       !temFiltroExplicito &&
       !interpretado.instrumento &&
       !interpretado.localizacao &&
@@ -350,13 +365,16 @@ exports.chat = async (req, res) => {
       preferenciasEfetivas.instrumento || interpretado.instrumento || preferenciasExplicitas.instrumento || null;
 
     return res.json({
+      modo: 'musico',
       matches: enrichedMatches,
       exactCount,
       similarCount,
       interpretado,
+      preferenciasEfetivas,
       entendiNada,
       semNenhumProximo,
       instrumentoUsado,
+      contexto: parsed.contexto || null,
     });
   } catch (err) {
     console.error('Erro no chat AI:', err.message);

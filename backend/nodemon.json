@@ -5,6 +5,6 @@
     "watch": [
         "src"
     ],
-    "ext": "ts",
+    "ext": "js,ts",
     "ignore": ["**/*.json"]
 }

@@ -5,7 +5,6 @@
     --sidebar-collapsed: 100px;
     --sidebar-expanded: 260px;
 
-    /* Shadows */
     --shadow-sm:      0 2px 8px rgba(0,0,0,0.07);
     --shadow-md:      0 6px 22px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.05);
     --shadow-lg:      0 14px 40px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.07);
@@ -13,18 +12,15 @@
     --shadow-orange:  0 6px 22px rgba(255,88,35,0.26);
     --shadow-orange-lg: 0 10px 32px rgba(255,88,35,0.32);
 
-    /* Radii */
     --radius-sm: 10px;
     --radius-md: 14px;
     --radius-lg: 20px;
     --radius-xl: 26px;
 
-    /* Glass surfaces */
     --glass-thin:   rgba(255,255,255,0.12);
     --glass-medium: rgba(255,255,255,0.34);
     --glass-strong: rgba(255,255,255,0.66);
 
-    /* Borders */
     --border-glass:  rgba(255,255,255,0.22);
     --border-orange: rgba(255,88,35,0.25);
 }
@@ -85,7 +81,6 @@ body {
     padding-left: var(--sidebar-expanded);
 }
 
-/* Global scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
@@ -96,7 +91,6 @@ body {
     background: rgba(255,88,35,0.55);
 }
 
-/* Focus ring for accessibility */
 :focus-visible {
     outline: 2px solid #ff5823;
     outline-offset: 3px;

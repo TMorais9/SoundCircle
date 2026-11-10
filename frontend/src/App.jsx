@@ -1,4 +1,3 @@
-// Libraries
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import AuthProvider from "react-auth-kit";
 import useIsAuthenticated from "react-auth-kit/hooks/useIsAuthenticated";

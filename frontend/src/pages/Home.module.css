@@ -1,4 +1,3 @@
-/* ── Layout ──────────────────────────────────────── */
 .cardSection {
     width: 100%;
     display: grid;
@@ -10,7 +9,6 @@
     margin-top: 8px;
 }
 
-/* ── Filter bar ──────────────────────────────────── */
 .filterBar {
     width: 100%;
     max-width: 1240px;
@@ -84,7 +82,6 @@
     border-color: #ff5823;
 }
 
-/* ── Status/Error ────────────────────────────────── */
 .statusMessage,
 .errorMessage {
     grid-column: 1 / -1;
@@ -97,7 +94,6 @@
 
 .errorMessage { color: #d93025; }
 
-/* ── Card ────────────────────────────────────────── */
 .card {
     width: 100%;
     background: rgba(255, 255, 255, 0.38);
@@ -242,7 +238,6 @@
     transform: translateX(-50%) translateY(-1px);
 }
 
-/* ── Search overlay ──────────────────────────────── */
 .searchOverlay {
     position: fixed;
     inset: 0;
@@ -487,7 +482,6 @@
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* ── Tutorial Modal ──────────────────────────────── */
 .modalOverlay {
     position: fixed;
     inset: 0;
@@ -675,7 +669,6 @@
     margin-top: 24px;
 }
 
-/* ── Responsive ──────────────────────────────────── */
 @media (max-width: 1200px) {
     .cardSection { grid-template-columns: repeat(3, minmax(240px, 290px)); }
 }
